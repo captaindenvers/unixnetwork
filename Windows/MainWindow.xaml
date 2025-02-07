@@ -3,28 +3,50 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:UnixLauncher"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent">
     <Grid>
-        <!-- Фон окна -->
-        <Border Background="#FF2D2D30" CornerRadius="10">
-            <Grid>
-                <!-- Панель с кнопками управления окном -->
-                <DockPanel Height="30" VerticalAlignment="Top" Background="#FF2D2D30" Name="DockPanel">
-                    <Button Content="X" DockPanel.Dock="Right" Width="30" Background="Transparent" Foreground="White"
-                            Click="CloseButton_Click" />
-                    <TextBlock Text="Unix launcher" VerticalAlignment="Center" Foreground="White" Margin="10,0,0,0"/>
-                </DockPanel>
+        <!-- Слой 1: Фоновое изображение с размытием -->
+        <Border CornerRadius="10">
+            <Border.Background>
+                <ImageBrush ImageSource="/Resourses/minecraftScreenshot1.jpg" Stretch="UniformToFill"/>
+            </Border.Background>
+            <Border.Effect>
+                <BlurEffect Radius="10"/>
+            </Border.Effect>
 
-                <!-- Основное содержимое окна -->
-                <StackPanel Margin="10,40,10,10">
-                    <TextBlock Text="Привет человеку, нашедшему этот прототип." FontSize="16" Foreground="White"/>
-                </StackPanel>
-            </Grid>
+            <!-- Затемнение фона -->
+            <Rectangle Fill="Black" Opacity="0.5"/>
         </Border>
+
+        <!-- Слой 2: Основное содержимое окна -->
+        <Grid>
+            <!-- Определение строк -->
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <!-- Для DockPanel -->
+                <RowDefinition Height="*" />
+                <!-- Для StackPanel -->
+            </Grid.RowDefinitions>
+
+            <!-- Панель с кнопками управления окном -->
+            <DockPanel Height="60" VerticalAlignment="Top" Name="DockPanel" Grid.Row="0">
+                <Button Content="X" DockPanel.Dock="Right" Width="60" Background="{x:Null}" Foreground="White"
+                        Click="CloseButton_Click" FontSize="24" BorderBrush="{x:Null}" />
+                <Button Content="-" DockPanel.Dock="Right" Width="60" Background="{x:Null}" Foreground="White"
+                        Click="MinimizeButton_Click" FontSize="24" BorderBrush="{x:Null}" />
+                <Border BorderBrush="#AF000000" BorderThickness="0,0,0,2">
+                    <TextBlock Text="UnixNetwork" VerticalAlignment="Center" Foreground="White" Margin="30,0,0,0" Width="740" FontSize="36" FontFamily="Segoe UI Semibold"/>
+                </Border>
+            </DockPanel>
+
+            <!-- Основное содержимое окна -->
+            <StackPanel Margin="10,10,10,10" Grid.Row="1">
+                <TextBlock Text="Привет человеку, нашедшему этот прототип." FontSize="16" Foreground="White"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>

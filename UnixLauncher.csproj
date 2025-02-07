@@ -8,4 +8,16 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="Resourses\minecraftScreenshot1.jpg" />
+    <None Remove="Resourses\minecraftScreenshot2.jpg" />
+    <None Remove="Resourses\minecraftScreenshot3.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resourses\minecraftScreenshot1.jpg" />
+    <Resource Include="Resourses\minecraftScreenshot2.jpg" />
+    <Resource Include="Resourses\minecraftScreenshot3.jpg" />
+  </ItemGroup>
+
 </Project>

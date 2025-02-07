@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Programming projects\\UnixLauncher\\UnixLauncher.csproj",
+      "projectUniqueName": "C:\\Users\\ImRibka\\Documents\\GitHub\\unixnetwork\\UnixLauncher.csproj",
       "projectName": "UnixLauncher",
-      "projectPath": "C:\\Programming projects\\UnixLauncher\\UnixLauncher.csproj",
+      "projectPath": "C:\\Users\\ImRibka\\Documents\\GitHub\\unixnetwork\\UnixLauncher.csproj",
       "packagesPath": "C:\\Users\\ImRibka\\.nuget\\packages\\",
-      "outputPath": "C:\\Programming projects\\UnixLauncher\\obj\\",
+      "outputPath": "C:\\Users\\ImRibka\\Documents\\GitHub\\unixnetwork\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\ImRibka\\AppData\\Roaming\\NuGet\\NuGet.Config",

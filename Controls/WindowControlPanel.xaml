@@ -1,0 +1,17 @@
+﻿<UserControl x:Class="UnixLauncher.Controls.WindowControlPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DockPanel Height="60" VerticalAlignment="Top" Name="DockPanel">
+        <!-- Кнопка закрытия -->
+        <Button Content="X" DockPanel.Dock="Right" Width="60" Background="{x:Null}" Foreground="White"
+                FontSize="24" BorderBrush="{x:Null}" Click="CloseButton_Click"/>
+        <!-- Кнопка сворачивания -->
+        <Button Content="-" DockPanel.Dock="Right" Width="60" Background="{x:Null}" Foreground="White"
+                FontSize="24" BorderBrush="{x:Null}" Click="MinimizeButton_Click"/>
+        <!-- Заголовок окна -->
+        <Border BorderBrush="#AF000000" BorderThickness="0,0,0,2">
+            <TextBlock Text="UnixNetwork" VerticalAlignment="Center" Foreground="White" Margin="30,0,0,0"
+                       Width="740" FontSize="36" FontFamily="Segoe UI Semibold"/>
+        </Border>
+    </DockPanel>
+</UserControl>

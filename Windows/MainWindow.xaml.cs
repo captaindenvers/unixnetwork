@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows;
+using UnixLauncher.Core;
 
 namespace UnixLauncher.Windows
 {
@@ -13,8 +14,11 @@ namespace UnixLauncher.Windows
             LocationChanged += MainWindow_LocationChanged;
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private async void Button_Click(object sender, RoutedEventArgs e)
         {
+            DefaultConfig defaultConfig = new DefaultConfig();
+            await defaultConfig.CreateOrSetProperty("programmedKey", "programmedValue");
+
             if (_loginPopupWindow != null)
                 return;
 

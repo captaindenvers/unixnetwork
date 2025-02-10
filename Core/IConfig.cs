@@ -19,9 +19,14 @@ namespace UnixLauncher.Core
         string PathToFile { get; }
 
         /// <summary>
+        /// Literally PathToFile + FileName
+        /// </summary>
+        public string FullFileName { get; }
+
+        /// <summary>
         /// Creates the field if it doesn't exist, and replaces the value if it does.
         /// </summary>
-        void CreateOrSetProperty<T>(string key, T value);
+        Task CreateOrSetProperty<T>(string key, T value);
 
         /// <summary>
         /// Retrieves a configuration value as a string.

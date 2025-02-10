@@ -26,6 +26,11 @@ namespace UnixLauncher.Windows
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
+            var (login, password) = (loginTextBox.Text, passwordTextBox.Text);
+
+            if (string.IsNullOrEmpty(login) || string.IsNullOrEmpty(password))
+                return;
+
             MessageBox.Show($"--- DEBUG PURPOSES ONLY\n\nLogin: {loginTextBox.Text}\nPassword: {passwordTextBox.Text}");
             this.Close();
         }

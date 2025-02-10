@@ -51,7 +51,7 @@
                             <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
                             <Style.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Foreground" Value="#FF3399FF"/>
+                                    <Setter Property="Foreground" Value="#664A4A4A"/>
                                     <Setter Property="RenderTransform">
                                         <Setter.Value>
                                             <ScaleTransform ScaleX="1.2" ScaleY="1.2"/>

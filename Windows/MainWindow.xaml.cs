@@ -1,69 +1,53 @@
-﻿using System.Windows;
-using System.Windows.Input;
+﻿using System;
+using System.Windows;
+using UnixLauncher.Core;
 
 namespace UnixLauncher.Windows
 {
     public partial class MainWindow : Window
     {
-        private bool isDragging = false; // Флаг для отслеживания состояния перетаскивания
-        private Point startPoint;        // Начальная позиция курсора (экранные координаты)
-        private Point startWindowPosition; // Начальное положение окна
+        private LoginPopupWindow _loginPopupWindow;
 
         public MainWindow()
         {
             InitializeComponent();
-            this.DockPanel.MouseDown += DockPanel_MouseDown;
-            this.DockPanel.MouseUp += DockPanel_MouseUp;
-            this.DockPanel.MouseMove += DockPanel_MouseMove;
+            LocationChanged += MainWindow_LocationChanged;
         }
 
-        private void DockPanel_MouseDown(object sender, MouseButtonEventArgs e)
+        private async void Button_Click(object sender, RoutedEventArgs e)
         {
-            if (e.LeftButton == MouseButtonState.Pressed)
+            DefaultConfig defaultConfig = new DefaultConfig();
+            await defaultConfig.CreateOrSetProperty("programmedKey", "programmedValue");
+
+            if (_loginPopupWindow != null)
+                return;
+
+            _loginPopupWindow = new LoginPopupWindow
             {
-                // Получаем начальные экранные координаты курсора
-                startPoint = this.PointToScreen(e.GetPosition(this));
-                // Запоминаем текущее положение окна
-                startWindowPosition = new Point(this.Left, this.Top);
-                isDragging = true;
+                Owner = this,
+                WindowStartupLocation = WindowStartupLocation.Manual,
+                ShowInTaskbar = false
+            };
 
-                // Захватываем мышь, чтобы получать события даже при выходе курсора за пределы окна
-                DockPanel.CaptureMouse();
-            }
+            UpdateLoginPopupPosition();
+
+            // При закрытии окна сбрасываем ссылку, чтобы можно было открыть его снова
+            _loginPopupWindow.Closed += (s, args) => _loginPopupWindow = null;
+            _loginPopupWindow.Show();
         }
 
-        private void DockPanel_MouseMove(object sender, MouseEventArgs e)
+        private void MainWindow_LocationChanged(object sender, EventArgs e)
         {
-            if (isDragging && e.LeftButton == MouseButtonState.Pressed)
-            {
-                // Текущие экранные координаты курсора
-                Point currentScreenPoint = this.PointToScreen(e.GetPosition(this));
-
-                // Вычисляем разницу между текущей позицией и начальной
-                double deltaX = currentScreenPoint.X - startPoint.X;
-                double deltaY = currentScreenPoint.Y - startPoint.Y;
-
-                // Применяем смещение к окну
-                this.Left = startWindowPosition.X + deltaX;
-                this.Top = startWindowPosition.Y + deltaY;
-            }
+            UpdateLoginPopupPosition();
         }
 
-        private void DockPanel_MouseUp(object sender, MouseButtonEventArgs e)
+        private void UpdateLoginPopupPosition()
         {
-            // Сбрасываем флаг перетаскивания и освобождаем захват мыши
-            isDragging = false;
-            DockPanel.ReleaseMouseCapture();
-        }
+            if (_loginPopupWindow == null)
+                return;
 
-        private void CloseButton_Click(object sender, RoutedEventArgs e)
-        {
-            this.Close();
-        }
-
-        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
-        {
-            WindowState = WindowState.Minimized;
+            _loginPopupWindow.Left = Left + (Width - _loginPopupWindow.Width) / 2;
+            _loginPopupWindow.Top = Top + (Height - _loginPopupWindow.Height) / 2;
         }
     }
 }

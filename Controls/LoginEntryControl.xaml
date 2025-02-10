@@ -1,0 +1,165 @@
+﻿<UserControl x:Class="UnixLauncher.Controls.LoginEntryControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:UnixLauncher.Controls"
+             x:Name="root">
+    <UserControl.Resources>
+        <!-- Converters for visibility based on IsPassword -->
+        <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <local:BooleanToVisibilityConverter x:Key="InvertedBooleanToVisibilityConverter" Invert="True" />
+
+        <!-- Brush for gray text -->
+        <SolidColorBrush x:Key="TextGrayBrush" Color="#FF888888" />
+
+        <!-- Gradient brush for input fields background -->
+        <LinearGradientBrush x:Key="InputBackgroundBrush" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="White" Offset="0"/>
+            <GradientStop Color="#FFF0F0F0" Offset="1"/>
+        </LinearGradientBrush>
+
+        <!-- Style for a rounded TextBox with several visual improvements -->
+        <Style x:Key="RoundedTextBoxStyle" TargetType="{x:Type TextBox}">
+            <Setter Property="Foreground" Value="{StaticResource TextGrayBrush}" />
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="6"/>
+            <Setter Property="MinHeight" Value="30"/>
+            <Setter Property="Background" Value="{StaticResource InputBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="#FFC0C0C0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border"
+                                CornerRadius="8"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <Border.Effect>
+                                <DropShadowEffect Color="Gray" BlurRadius="5" ShadowDepth="0"/>
+                            </Border.Effect>
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="0"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <!-- Hover: change border color -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="DarkGray"/>
+                            </Trigger>
+                            <!-- Focus: change border and scale up -->
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#FF3399FF"/>
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="1.05" ScaleY="1.05"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <!-- Disabled: lower opacity -->
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <!-- Change the cursor on mouse over -->
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Cursor" Value="IBeam"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Style for a rounded PasswordBox with similar visual improvements -->
+        <Style x:Key="RoundedPasswordBoxStyle" TargetType="{x:Type PasswordBox}">
+            <Setter Property="Foreground" Value="{StaticResource TextGrayBrush}" />
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="6"/>
+            <Setter Property="MinHeight" Value="30"/>
+            <Setter Property="Background" Value="{StaticResource InputBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="#FFC0C0C0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <Border x:Name="border"
+                                CornerRadius="8"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <Border.Effect>
+                                <DropShadowEffect Color="Gray" BlurRadius="5" ShadowDepth="0"/>
+                            </Border.Effect>
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="0"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <!-- Hover: change border color -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="DarkGray"/>
+                            </Trigger>
+                            <!-- Focus: change border and scale up -->
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#FF3399FF"/>
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="1.05" ScaleY="1.05"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <!-- Disabled: lower opacity -->
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <!-- Change the cursor on mouse over -->
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Cursor" Value="IBeam"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <StackPanel>
+        <!-- Centered, bold, and drop-shadowed explanatory text -->
+        <TextBlock Text="{Binding ExplanatoryText, ElementName=root}" 
+                   Margin="0,0,0,5" 
+                   Foreground="{StaticResource TextGrayBrush}"
+                   HorizontalAlignment="Center"
+                   TextAlignment="Center"
+                   FontSize="16"
+                   FontWeight="Bold">
+            <TextBlock.Effect>
+                <DropShadowEffect Color="Gray" BlurRadius="4" ShadowDepth="1"/>
+            </TextBlock.Effect>
+        </TextBlock>
+
+        <Grid>
+            <!-- Display TextBox when IsPassword is false -->
+            <TextBox x:Name="txtInput"
+                     Style="{StaticResource RoundedTextBoxStyle}"
+                     Visibility="{Binding IsPassword, ElementName=root, Converter={StaticResource InvertedBooleanToVisibilityConverter}}"
+                     Text="{Binding Text, ElementName=root, UpdateSourceTrigger=PropertyChanged}" />
+
+            <!-- Display PasswordBox when IsPassword is true -->
+            <PasswordBox x:Name="pwdInput"
+                         Style="{StaticResource RoundedPasswordBoxStyle}"
+                         Visibility="{Binding IsPassword, ElementName=root, Converter={StaticResource BooleanToVisibilityConverter}}"
+                         PasswordChanged="pwdInput_PasswordChanged" />
+        </Grid>
+    </StackPanel>
+</UserControl>

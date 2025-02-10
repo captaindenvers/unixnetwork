@@ -38,7 +38,10 @@
             <!-- Основное содержимое окна -->
             <StackPanel Margin="10,10,10,10" Grid.Row="1">
                 <TextBlock Text="Привет человеку, нашедшему этот прототип." FontSize="16" Foreground="White"/>
+
+                <Button Content="Авторизация" Width="auto" Padding="10" FontSize="20" HorizontalAlignment="Right" Click="Button_Click"/>
             </StackPanel>
+
         </Grid>
     </Grid>
 </Window>

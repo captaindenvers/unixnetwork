@@ -6,7 +6,7 @@ namespace UnixLauncher.Windows
 {
     public partial class MainWindow : Window
     {
-        private LoginPopupWindow _loginPopupWindow;
+        private LoginPopupWindow? _loginPopupWindow;
 
         public MainWindow()
         {
@@ -14,10 +14,8 @@ namespace UnixLauncher.Windows
             LocationChanged += MainWindow_LocationChanged;
         }
 
-        private async void Button_Click(object sender, RoutedEventArgs e)
+        private void Button_Click(object sender, RoutedEventArgs e)
         {
-            DefaultConfig defaultConfig = new DefaultConfig();
-            await defaultConfig.CreateOrSetProperty("programmedKey", "programmedValue");
 
             if (_loginPopupWindow != null)
                 return;
@@ -29,14 +27,22 @@ namespace UnixLauncher.Windows
                 ShowInTaskbar = false
             };
 
-            UpdateLoginPopupPosition();
+            _loginPopupWindow.OnClose += loginPopupWindow_OnClose;
 
+            UpdateLoginPopupPosition();
+                
             // При закрытии окна сбрасываем ссылку, чтобы можно было открыть его снова
             _loginPopupWindow.Closed += (s, args) => _loginPopupWindow = null;
             _loginPopupWindow.Show();
         }
 
-        private void MainWindow_LocationChanged(object sender, EventArgs e)
+        private void loginPopupWindow_OnClose()
+        {
+            this.WindowState = WindowState.Normal;
+            this.Activate();
+        }
+
+        private void MainWindow_LocationChanged(object? sender, EventArgs e)
         {
             UpdateLoginPopupPosition();
         }

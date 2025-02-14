@@ -19,7 +19,7 @@ namespace UnixLauncher.Core
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_".ToCharArray();
 
         private static readonly char[] _allowedPasswordSymbols =
-            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_!@#$%^&*()-+=<>?/".ToCharArray();
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_!@#$%^&*()-+=<>?/\\|[]{}".ToCharArray();
 
         public static ValidatorSettings LoginSettings { get; } = new(_allowedLoginSymbols, 16, 3);
         public static ValidatorSettings PasswordSettings { get; } = new(_allowedPasswordSymbols, 32, 7);

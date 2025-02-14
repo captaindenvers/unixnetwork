@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -10,9 +11,14 @@ namespace UnixLauncher.Controls
     /// </summary>
     public partial class WindowControlPanel : UserControl
     {
-        private bool isDragging = false;          // Флаг для отслеживания состояния перетаскивания
-        private Point startPoint;                 // Начальная позиция курсора (в экранных координатах)
-        private Point startWindowPosition;        // Начальное положение окна
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool GetCursorPos(out System.Drawing.Point lpPoint);
+
+
+        private System.Drawing.Point startPoint;
+        private Point startWindowPosition;
+        private bool isDragging = false;
 
         public WindowControlPanel()
         {
@@ -26,22 +32,17 @@ namespace UnixLauncher.Controls
 
         private void DockPanel_MouseDown(object sender, MouseButtonEventArgs e)
         {
+            // Record the initial mouse position (in screen coordinates) and window position
             if (e.LeftButton == MouseButtonState.Pressed)
             {
-                // Получаем начальные экранные координаты курсора
-                startPoint = this.PointToScreen(e.GetPosition(this));
-
-                // Получаем родительское окно и запоминаем его позицию
+                // Using GetCursorPos to record the starting screen point.
+                GetCursorPos(out startPoint);
                 Window window = Window.GetWindow(this);
                 if (window != null)
                 {
                     startWindowPosition = new Point(window.Left, window.Top);
                 }
-
                 isDragging = true;
-
-                // Захватываем мышь, чтобы получать события даже при выходе курсора за пределы элемента
-                this.DockPanel.CaptureMouse();
             }
         }
 
@@ -49,28 +50,25 @@ namespace UnixLauncher.Controls
         {
             if (isDragging && e.LeftButton == MouseButtonState.Pressed)
             {
-                // Текущие экранные координаты курсора
-                Point currentScreenPoint = this.PointToScreen(e.GetPosition(this));
-
-                // Вычисляем смещение относительно начальной точки
-                double deltaX = currentScreenPoint.X - startPoint.X;
-                double deltaY = currentScreenPoint.Y - startPoint.Y;
-
-                // Получаем родительское окно и изменяем его позицию
-                Window window = Window.GetWindow(this);
-                if (window != null)
+                // Get current mouse position from the Win32 API (in screen coordinates)
+                if (GetCursorPos(out System.Drawing.Point currentPos))
                 {
-                    window.Left = startWindowPosition.X + deltaX;
-                    window.Top = startWindowPosition.Y + deltaY;
+                    double deltaX = currentPos.X - startPoint.X;
+                    double deltaY = currentPos.Y - startPoint.Y;
+
+                    Window window = Window.GetWindow(this);
+                    if (window != null)
+                    {
+                        window.Left = startWindowPosition.X + deltaX;
+                        window.Top = startWindowPosition.Y + deltaY;
+                    }
                 }
             }
         }
 
         private void DockPanel_MouseUp(object sender, MouseButtonEventArgs e)
         {
-            // Сбрасываем флаг перетаскивания и освобождаем захват мыши
             isDragging = false;
-            this.DockPanel.ReleaseMouseCapture();
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)

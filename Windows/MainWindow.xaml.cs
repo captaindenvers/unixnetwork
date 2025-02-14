@@ -27,17 +27,16 @@ namespace UnixLauncher.Windows
                 ShowInTaskbar = false
             };
 
-            _loginPopupWindow.OnClose += loginPopupWindow_OnClose;
-
             UpdateLoginPopupPosition();
                 
             // При закрытии окна сбрасываем ссылку, чтобы можно было открыть его снова
-            _loginPopupWindow.Closed += (s, args) => _loginPopupWindow = null;
+            _loginPopupWindow.Closed += LoginPopupWindow_OnClose;
             _loginPopupWindow.Show();
         }
 
-        private void loginPopupWindow_OnClose()
+        private void LoginPopupWindow_OnClose(object? sender, EventArgs e)
         {
+            _loginPopupWindow = null;
             this.WindowState = WindowState.Normal;
             this.Activate();
         }

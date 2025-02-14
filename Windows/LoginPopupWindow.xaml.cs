@@ -20,7 +20,6 @@ namespace UnixLauncher.Windows
     /// </summary>
     public partial class LoginPopupWindow : Window
     {
-        public event Action? OnClose;
         readonly DataValidator validator;
         public LoginPopupWindow()
         {
@@ -44,17 +43,11 @@ namespace UnixLauncher.Windows
 
             MessageBox.Show($"--- DEBUG PURPOSES ONLY\n\nLogin: {loginTextBox.Text}\nPassword: {passwordTextBox.Text}");
 
-            CloseLogic();
+            this.Close();
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
-            CloseLogic();
-        }
-
-        private void CloseLogic() 
-        {
-            OnClose?.Invoke();
             this.Close();
         }
     }

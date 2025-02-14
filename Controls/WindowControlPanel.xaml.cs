@@ -29,6 +29,9 @@ namespace UnixLauncher.Controls
         {
             if (e.LeftButton == MouseButtonState.Pressed)
             {
+                // Получаем начальные экранные координаты курсора
+                startPoint = this.PointToScreen(e.GetPosition(this));
+
                 // Получаем родительское окно и запоминаем его позицию
                 Window window = Window.GetWindow(this);
                 if (window != null)
@@ -48,13 +51,11 @@ namespace UnixLauncher.Controls
             if (isDragging && e.LeftButton == MouseButtonState.Pressed)
             {
                 // Текущие экранные координаты курсора
-                Point relativePos = e.GetPosition(this);
-                var dpi = VisualTreeHelper.GetDpi(this);
-                Point screenPos = new Point(relativePos.X * dpi.DpiScaleX, relativePos.Y * dpi.DpiScaleY);
+                Point currentScreenPoint = this.PointToScreen(e.GetPosition(this));
 
                 // Вычисляем смещение относительно начальной точки
-                double deltaX = screenPos.X - startPoint.X;
-                double deltaY = screenPos.Y - startPoint.Y;
+                double deltaX = currentScreenPoint.X - startPoint.X;
+                double deltaY = currentScreenPoint.Y - startPoint.Y;
 
                 // Получаем родительское окно и изменяем его позицию
                 Window window = Window.GetWindow(this);

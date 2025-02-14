@@ -8,14 +8,15 @@
 	    <UseWPF>true</UseWPF>   
     </PropertyGroup>
 
+	<ItemGroup>
+		<RuntimeHostConfigurationOption Include="Switch.System.Windows.DoNotScaleForDpiChanges" Value="true" />
+		<RuntimeHostConfigurationOption Include="Switch.System.IO.UseLegacyPathHandling" Value="false" />
+	</ItemGroup>
+
   <ItemGroup>
     <None Remove="Resourses\minecraftScreenshot1.jpg" />
     <None Remove="Resourses\minecraftScreenshot2.jpg" />
     <None Remove="Resourses\minecraftScreenshot3.jpg" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.VisualStudio.Services.Client" Version="19.225.1" />
   </ItemGroup>
 
   <ItemGroup>

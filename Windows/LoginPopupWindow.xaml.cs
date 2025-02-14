@@ -20,7 +20,7 @@ namespace UnixLauncher.Windows
     /// </summary>
     public partial class LoginPopupWindow : Window
     {
-        DataValidator validator;
+        readonly DataValidator validator;
         public LoginPopupWindow()
         {
             InitializeComponent();
@@ -35,13 +35,14 @@ namespace UnixLauncher.Windows
             bool isLoginPassCheck = validator.Validate(login, PresetsValidatorSettings.LoginSettings);
             bool isPasswordPassCheck = validator.Validate(password, PresetsValidatorSettings.PasswordSettings);
 
-            if (isLoginPassCheck || isPasswordPassCheck)
+            if (!isLoginPassCheck || !isPasswordPassCheck)
             {
                 MessageBox.Show("Проверь логин/пароль, еблан. В логине не должно быть спец. символов плюс меньше 16 символов, больше 3.\n\nПароль меньше 32, больше 8.");
                 return;
             }
 
             MessageBox.Show($"--- DEBUG PURPOSES ONLY\n\nLogin: {loginTextBox.Text}\nPassword: {passwordTextBox.Text}");
+
             this.Close();
         }
 

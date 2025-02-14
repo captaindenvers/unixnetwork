@@ -10,11 +10,14 @@ namespace UnixLauncher.Core
     {
         public bool Validate(string text, ValidatorSettings validatorSettings)
         {
-            if (string.IsNullOrEmpty(text)) return false;
-            if (text.All(c => validatorSettings.AllowedSymbols.Contains(c))) return false;
+            if (string.IsNullOrEmpty(text))
+                return false;
 
-            if(text.Length > validatorSettings.MaxLenght) return false;
-            if(text.Length < validatorSettings.MinLenght) return false;
+            if (text.Length > validatorSettings.MaxLenght || text.Length < validatorSettings.MinLenght)
+                return false;
+
+            if (!text.All(c => validatorSettings.AllowedSymbols.Contains(c)))
+                return false;
 
             return true;
         }

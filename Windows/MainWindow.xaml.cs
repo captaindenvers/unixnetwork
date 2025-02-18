@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows;
 using UnixLauncher.Core;
+using UnixLauncher.Core.Test;
 
 namespace UnixLauncher.Windows
 {

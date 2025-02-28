@@ -18,7 +18,7 @@ namespace UnixLauncher.Core
             if (string.IsNullOrEmpty(text))
                 return false;
 
-            if (text.Length > validatorSettings.MaxLenght || text.Length < validatorSettings.MinLenght)
+            if (text.Length > validatorSettings.MaxLength || text.Length < validatorSettings.MinLength)
                 return false;
 
             if (!text.All(c => validatorSettings.AllowedSymbols.Contains(c)))

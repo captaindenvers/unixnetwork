@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
+﻿using System.IO;
 
-namespace UnixLauncher.Core
+namespace UnixLauncher.Core.Config
 {
     class DefaultConfig : IConfig
     {

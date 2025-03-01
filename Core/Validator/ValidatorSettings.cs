@@ -1,6 +1,6 @@
 ﻿using UnixLauncher.Core.Exceptions;
 
-namespace UnixLauncher.Core
+namespace UnixLauncher.Core.Validator
 {
     /// <summary>
     /// Основные настройки подтверждения данных
@@ -32,9 +32,9 @@ namespace UnixLauncher.Core
             
 
             // --- Инициализация
-            this.AllowedSymbols = allowedSymbols;
-            this.MaxLength = maxLength;
-            this.MinLength = minLength;
+            AllowedSymbols = allowedSymbols;
+            MaxLength = maxLength;
+            MinLength = minLength;
         }
     }
 

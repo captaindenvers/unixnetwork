@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Navigation;
-
-namespace UnixLauncher.Core
+﻿namespace UnixLauncher.Core
 {
     static class AppDataManager
     {

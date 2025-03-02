@@ -5,17 +5,17 @@
         /// <summary>
         /// Gets the name of the configuration file with extention.
         /// </summary>
-        string FileName { get; }
+        string GetFileName();
 
         /// <summary>
         /// Gets the full path to the configuration file | NOT including file name.
         /// </summary>
-        string PathToFile { get; }
+        string GetPathToFile();
 
         /// <summary>
         /// Literally PathToFile + FileName
         /// </summary>
-        public string FullFileName { get; }
+        string FullFileName { get; }
 
         /// <summary>
         /// Creates the field if it doesn't exist, and replaces the value if it does.

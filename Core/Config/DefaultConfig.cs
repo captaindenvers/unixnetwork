@@ -5,10 +5,10 @@ namespace UnixLauncher.Core.Config
     class DefaultConfig : IConfig
     {
         // Имя файла конфигурации
-        public string FileName => "launcher.cfg";
+        public string FileName { get; private set; } = "launcher.cfg";
 
         // Путь к папке, где хранится файл конфигурации
-        public string PathToFile => AppDataManager.GetFolder();
+        public string PathToFile { get; private set; } = AppDataManager.GetFolder();
 
         // Полный путь к файлу конфигурации
         public string FullFileName => PathToFile + FileName;
@@ -21,6 +21,15 @@ namespace UnixLauncher.Core.Config
         [
             // тут будут данные... обязательно будут...
         ];
+
+        public DefaultConfig() { }
+
+        public DefaultConfig(string fileName, string pathToFile, List<KeyValuePair<string, string>> defaultConfigValues)
+        {
+            FileName = fileName;
+            PathToFile = pathToFile;
+            _defaultConfigValues = defaultConfigValues;
+        }
 
         // Стартовый комментарий, записываемый в начале файла конфигурации
         private const string START_COMMENT =
@@ -37,6 +46,11 @@ namespace UnixLauncher.Core.Config
 
 
             """;
+
+        public string GetFileName() => FileName;
+
+        public string GetPathToFile() => PathToFile;
+
 
         /// <summary>
         /// Создаёт файл конфигурации, если он отсутствует или требуется его перезапись.
@@ -133,6 +147,9 @@ namespace UnixLauncher.Core.Config
         /// <returns>Если ключ найден – возвращает значение, иначе null</returns>
         public string? GetProperty(string key)
         {
+            if (string.IsNullOrWhiteSpace(key))
+                return null;
+
             if (!File.Exists(FullFileName))
                 return null;
 
@@ -156,7 +173,8 @@ namespace UnixLauncher.Core.Config
                 string currentKey = trimmedLine.Substring(0, equalsIndex).Trim();
                 string currentValue = trimmedLine.Substring(equalsIndex + 1).Trim();
 
-                if (string.Equals(currentKey, key, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(currentKey, key, StringComparison.OrdinalIgnoreCase)
+                    && !string.IsNullOrWhiteSpace(currentValue))
                     return currentValue;
             }
             return null;

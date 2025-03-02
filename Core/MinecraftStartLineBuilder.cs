@@ -8,8 +8,8 @@ namespace UnixLauncher.Core
         private readonly StringBuilder stringBuilder;
         private readonly IMemoryProvider memoryProvider;
 
-        private const long MIN_RAM = 300;
-        private const int PART_FROM_MAX_RAM = 70;
+        private const long MIN_RAM = 1024; // MB
+        private const int PART_FROM_MAX_RAM = 70; // %
         private readonly long MAX_RAM;
 
         public MinecraftStartLineBuilder(IMemoryProvider memoryProvider)
@@ -28,7 +28,7 @@ namespace UnixLauncher.Core
             long mbRAM = kbRAM / 1024;
             MAX_RAM = (mbRAM * PART_FROM_MAX_RAM) / 100;
 
-            stringBuilder = new StringBuilder();
+            stringBuilder = new();
             stringBuilder.Append("java ");
         }
 

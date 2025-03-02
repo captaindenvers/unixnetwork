@@ -2,6 +2,6 @@
 {
     internal interface IMemoryProvider
     {
-        bool GetRAM(out long TotalMemoryInKilobytes);
+        bool GetRAM(out long totalMemoryInKilobytes);
     }
 }

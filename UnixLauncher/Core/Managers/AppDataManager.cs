@@ -1,4 +1,6 @@
-﻿namespace UnixLauncher.Core
+﻿using System.IO;
+
+namespace UnixLauncher.Core.Managers
 {
     static class AppDataManager
     {
@@ -10,7 +12,9 @@
         /// <returns>Возвращает строку абсолютного пути</returns>
         public static string GetFolder() 
         {
-            return $"{Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}\\{_companyName}\\";
+            return Path.Combine(
+                                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                                _companyName);
         }
     }
 }

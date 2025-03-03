@@ -1,8 +1,8 @@
 using Xunit;
 using Moq;
 using FluentAssertions;
-using UnixLauncher.Core;
 using UnixLauncher.Core.Config;
+using UnixLauncher.Core.Managers;
 
 namespace UnixLauncher.Tests
 {

@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using UnixLauncher.Core.Misc;
 
-namespace UnixLauncher.Core
+namespace UnixLauncher.Core.MinecraftClient
 {
     internal class MinecraftStartLineBuilder
     {
@@ -26,7 +26,7 @@ namespace UnixLauncher.Core
 
             // --- Calculating part of max RAM
             long mbRAM = kbRAM / 1024;
-            MAX_RAM = (mbRAM * PART_FROM_MAX_RAM) / 100;
+            MAX_RAM = mbRAM * PART_FROM_MAX_RAM / 100;
 
             stringBuilder = new();
             stringBuilder.Append("java ");

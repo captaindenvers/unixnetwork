@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using UnixLauncher.Core.Managers;
 
 namespace UnixLauncher.Core.Config
 {
@@ -24,7 +25,9 @@ namespace UnixLauncher.Core.Config
 
         public DefaultConfig() { }
 
-        public DefaultConfig(string fileName, string pathToFile, List<KeyValuePair<string, string>> defaultConfigValues)
+        public DefaultConfig(string fileName,
+                             string pathToFile,
+                             List<KeyValuePair<string, string>> defaultConfigValues)
         {
             FileName = fileName;
             PathToFile = pathToFile;

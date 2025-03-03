@@ -45,7 +45,7 @@ namespace UnixLauncher.Core.Validator
     {
         // Массивы допустимых символов для проверки данных
         private static readonly char[] _allowedLoginSymbols =
-            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_".ToCharArray();
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_".ToCharArray();
         private static readonly char[] _allowedPasswordSymbols =
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_!@#$%^&*()-+=<>?/\\|[]{}".ToCharArray();
 
@@ -55,8 +55,8 @@ namespace UnixLauncher.Core.Validator
         public static ValidatorSettings LoginSettings { get; } = new(_allowedLoginSymbols, 16, 3);
         
         /// <summary>
-        /// Готовые настройки пароля с максимальной длиной 32 и минимальной 7
+        /// Готовые настройки пароля с максимальной длиной 32 и минимальной 8
         /// </summary>
-        public static ValidatorSettings PasswordSettings { get; } = new(_allowedPasswordSymbols, 32, 7);
+        public static ValidatorSettings PasswordSettings { get; } = new(_allowedPasswordSymbols, 32, 8);
     }
 }

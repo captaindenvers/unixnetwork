@@ -1,7 +1,7 @@
 ﻿namespace UnixLauncher.Core.Exceptions
 {
-    class ValidatorException(string? message, int Value) : Exception(message)
+    class ValidatorException(string? message, int value) : Exception(message)
     {
-        public readonly int? value = Value;
+        public readonly int? Value = value;
     }
 }

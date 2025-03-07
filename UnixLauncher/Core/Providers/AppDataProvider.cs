@@ -2,7 +2,7 @@
 
 namespace UnixLauncher.Core.Managers
 {
-    static class AppDataManager
+    static class AppDataProvider
     {
         private static readonly string _companyName = "UnixNetwork";
 

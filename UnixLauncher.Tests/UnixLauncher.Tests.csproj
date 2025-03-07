@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\unixnetwork\UnixLauncher.csproj" />
+    <ProjectReference Include="..\UnixLauncher\UnixLauncher.csproj" />
   </ItemGroup>
 
   <ItemGroup>

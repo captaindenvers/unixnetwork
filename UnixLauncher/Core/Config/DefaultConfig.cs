@@ -9,7 +9,7 @@ namespace UnixLauncher.Core.Config
         public string FileName { get; private set; } = "launcher.cfg";
 
         // Путь к папке, где хранится файл конфигурации
-        public string PathToFile { get; private set; } = AppDataManager.GetFolder();
+        public string PathToFile { get; private set; } = AppDataProvider.GetFolder();
 
         // Полный путь к файлу конфигурации
         public string FullFileName => PathToFile + FileName;

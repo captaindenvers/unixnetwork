@@ -57,7 +57,7 @@ namespace UnixLauncher.Tests
 
             // Act & Assert
             defaultConfig.GetFileName().Should().Be("launcher.cfg");
-            defaultConfig.GetPathToFile().Should().Be(AppDataManager.GetFolder());
+            defaultConfig.GetPathToFile().Should().Be(AppDataProvider.GetFolder());
         }
 
         [Fact]

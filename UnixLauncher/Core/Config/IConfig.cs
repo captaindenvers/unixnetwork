@@ -18,6 +18,11 @@
         string FullFileName { get; }
 
         /// <summary>
+        /// An object of this class | Singleton
+        /// </summary>
+        static IConfig? Instance { get; }
+
+        /// <summary>
         /// Creates the field if it doesn't exist, and replaces the value if it does.
         /// </summary>
         Task CreateOrSetProperty<T>(string key, T value);

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Windows;
-using UnixLauncher.Core;
-using UnixLauncher.Core.Test;
+﻿using System.Windows;
 
 namespace UnixLauncher.Windows
 {

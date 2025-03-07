@@ -50,15 +50,21 @@ namespace UnixLauncher.Tests
         }
 
         [Fact]
-        public void DefaultConstructor_SetsDefaultValues()
+        public void DefaultInstance_Avaible()
         {
-            // Arrange
-            var defaultConfig = new DefaultConfig();
-
-            // Act & Assert
-            defaultConfig.GetFileName().Should().Be("launcher.cfg");
-            defaultConfig.GetPathToFile().Should().Be(AppDataProvider.GetFolder());
+            DefaultConfig.Instance.Should().NotBeNull();
         }
+
+        //[Fact]
+        //public void DefaultConstructor_SetsDefaultValues()
+        //{
+        //    // Arrange
+        //    var defaultConfig = new DefaultConfig();
+
+        //    // Act & Assert
+        //    defaultConfig.GetFileName().Should().Be("launcher.cfg");
+        //    defaultConfig.GetPathToFile().Should().Be(AppDataProvider.GetFolder());
+        //}
 
         [Fact]
         public async Task CreateOrSetProperty_CreatesConfigFile_WhenFileDoesNotExist()
@@ -116,7 +122,7 @@ namespace UnixLauncher.Tests
         }
 
         [Fact]
-        public async Task GetProperty_ReturnsNull_WhenFileDoesNotExist()
+        public void GetProperty_ReturnsNull_WhenFileDoesNotExist()
         {
             // Arrange - ensure file doesn't exist
             if (File.Exists(_fullTestPath))

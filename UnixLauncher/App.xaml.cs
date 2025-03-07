@@ -1,5 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using System.Windows;
+﻿using System.Windows;
 using UnixLauncher.Windows;
 
 namespace UnixLauncher
@@ -14,7 +13,7 @@ namespace UnixLauncher
             base.OnStartup(e);
 
             // --- DI
-
+            
 
             // --- Включаем основное окно
             Window mainWindow = new MainWindow();

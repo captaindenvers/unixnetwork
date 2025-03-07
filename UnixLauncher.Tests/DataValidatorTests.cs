@@ -10,134 +10,152 @@ namespace UnixLauncher.Tests
 {
     public class DataValidatorTests
     {
+        private readonly DataValidator _validator;
+
+        public DataValidatorTests()
+        {
+            _validator = new DataValidator();
+        }
+
         [Fact]
-        public void Constructor_ValidParameters_CreatesInstance()
+        public void Validate_NullText_ReturnsFalse()
         {
             // Arrange
-            var allowedSymbols = new[] { 'a', 'b', 'c' };
-            const int maxLength = 10;
-            const int minLength = 3;
+            string text = null;
+            var settings = new ValidatorSettings(new[] { 'a' }, 10, 1);
 
             // Act
-            var settings = new ValidatorSettings(allowedSymbols, maxLength, minLength);
+            var result = _validator.Validate(text, settings);
 
             // Assert
-            Assert.Equal(allowedSymbols, settings.AllowedSymbols);
-            Assert.Equal(maxLength, settings.MaxLength);
-            Assert.Equal(minLength, settings.MinLength);
+            Assert.False(result);
         }
 
         [Fact]
-        public void Constructor_NullAllowedSymbols_ThrowsValidatorException()
+        public void Validate_EmptyText_ReturnsFalse()
         {
             // Arrange
-            char[] allowedSymbols = null;
-            const int maxLength = 10;
-            const int minLength = 3;
+            var text = string.Empty;
+            var settings = new ValidatorSettings(new[] { 'a' }, 10, 1);
 
-            // Act & Assert
-            var exception = Assert.Throws<ValidatorException>(() =>
-                new ValidatorSettings(allowedSymbols, maxLength, minLength));
-
-            Assert.Equal("Allowed symbols array must not be null.", exception.Message);
-            Assert.Equal(int.MinValue, exception.Value);
-        }
-
-        [Fact]
-        public void Constructor_EmptyAllowedSymbols_ThrowsValidatorException()
-        {
-            // Arrange
-            var allowedSymbols = Array.Empty<char>();
-            const int maxLength = 10;
-            const int minLength = 3;
-
-            // Act & Assert
-            var exception = Assert.Throws<ValidatorException>(() =>
-                new ValidatorSettings(allowedSymbols, maxLength, minLength));
-
-            Assert.Equal("There must be at least 1 allowed symbol.", exception.Message);
-            Assert.Equal(0, exception.Value);
-        }
-
-        [Fact]
-        public void Constructor_MaxLengthLessThanOne_ThrowsValidatorException()
-        {
-            // Arrange
-            var allowedSymbols = new[] { 'a', 'b', 'c' };
-            const int maxLength = 0;
-            const int minLength = 0;
-
-            // Act & Assert
-            var exception = Assert.Throws<ValidatorException>(() =>
-                new ValidatorSettings(allowedSymbols, maxLength, minLength));
-
-            Assert.Equal("Max length lower 1.", exception.Message);
-            Assert.Equal(0, exception.Value);
-        }
-
-        [Fact]
-        public void Constructor_MinLengthLessThanZero_ThrowsValidatorException()
-        {
-            // Arrange
-            var allowedSymbols = new[] { 'a', 'b', 'c' };
-            const int maxLength = 10;
-            const int minLength = -1;
-
-            // Act & Assert
-            var exception = Assert.Throws<ValidatorException>(() =>
-                new ValidatorSettings(allowedSymbols, maxLength, minLength));
-
-            Assert.Equal("Min length lower 0.", exception.Message);
-            Assert.Equal(-1, exception.Value);
-        }
-
-        [Fact]
-        public void Constructor_MinLengthGreaterThanMaxLength_ThrowsValidatorException()
-        {
-            // Arrange
-            var allowedSymbols = new[] { 'a', 'b', 'c' };
-            const int maxLength = 5;
-            const int minLength = 10;
-
-            // Act & Assert
-            var exception = Assert.Throws<ValidatorException>(() =>
-                new ValidatorSettings(allowedSymbols, maxLength, minLength));
-
-            Assert.Equal($"MinLength ({minLength}) bigger maxLength ({maxLength}).", exception.Message);
-            Assert.Equal(int.MinValue, exception.Value);
-        }
-
-        [Fact]
-        public void PresetsValidatorSettings_LoginSettings_HasCorrectValues()
-        {
             // Act
-            var loginSettings = PresetsValidatorSettings.LoginSettings;
+            var result = _validator.Validate(text, settings);
 
             // Assert
-            Assert.Equal(16, loginSettings.MaxLength);
-            Assert.Equal(3, loginSettings.MinLength);
-            Assert.Contains('a', loginSettings.AllowedSymbols);
-            Assert.Contains('Z', loginSettings.AllowedSymbols);
-            Assert.Contains('_', loginSettings.AllowedSymbols);
-            Assert.Contains('9', loginSettings.AllowedSymbols);
-            Assert.DoesNotContain('@', loginSettings.AllowedSymbols);
+            Assert.False(result);
         }
 
         [Fact]
-        public void PresetsValidatorSettings_PasswordSettings_HasCorrectValues()
+        public void Validate_TextTooLong_ReturnsFalse()
         {
+            // Arrange
+            var text = "abcdefghijk"; // 11 chars
+            var settings = new ValidatorSettings(new[] { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k' }, 10, 1);
+
             // Act
-            var passwordSettings = PresetsValidatorSettings.PasswordSettings;
+            var result = _validator.Validate(text, settings);
 
             // Assert
-            Assert.Equal(32, passwordSettings.MaxLength);
-            Assert.Equal(8, passwordSettings.MinLength);
-            Assert.Contains('a', passwordSettings.AllowedSymbols);
-            Assert.Contains('Z', passwordSettings.AllowedSymbols);
-            Assert.Contains('_', passwordSettings.AllowedSymbols);
-            Assert.Contains('!', passwordSettings.AllowedSymbols);
-            Assert.Contains('@', passwordSettings.AllowedSymbols);
-            Assert.DoesNotContain(' ', passwordSettings.AllowedSymbols);
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void Validate_TextTooShort_ReturnsFalse()
+        {
+            // Arrange
+            var text = "ab"; // 2 chars
+            var settings = new ValidatorSettings(new[] { 'a', 'b' }, 10, 3);
+
+            // Act
+            var result = _validator.Validate(text, settings);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void Validate_ContainsDisallowedSymbols_ReturnsFalse()
+        {
+            // Arrange
+            var text = "abc123";
+            var settings = new ValidatorSettings(new[] { 'a', 'b', 'c' }, 10, 1);
+
+            // Act
+            var result = _validator.Validate(text, settings);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void Validate_ValidText_ReturnsTrue()
+        {
+            // Arrange
+            var text = "abc123";
+            var settings = new ValidatorSettings(new[] { 'a', 'b', 'c', '1', '2', '3' }, 10, 1);
+
+            // Act
+            var result = _validator.Validate(text, settings);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public void Validate_TextExactlyMinLength_ReturnsTrue()
+        {
+            // Arrange
+            var text = "abc"; // 3 chars
+            var settings = new ValidatorSettings(new[] { 'a', 'b', 'c' }, 10, 3);
+
+            // Act
+            var result = _validator.Validate(text, settings);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public void Validate_TextExactlyMaxLength_ReturnsTrue()
+        {
+            // Arrange
+            var text = "abcdefghij"; // 10 chars
+            var settings = new ValidatorSettings(
+                new[] { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j' },
+                10,
+                1);
+
+            // Act
+            var result = _validator.Validate(text, settings);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public void Validate_WithLoginPreset_ValidatesCorrectly()
+        {
+            // Arrange
+            var validator = new DataValidator();
+
+            // Act & Assert
+            Assert.True(validator.Validate("user_123", PresetsValidatorSettings.LoginSettings));
+            Assert.False(validator.Validate("us", PresetsValidatorSettings.LoginSettings)); // Too short
+            Assert.False(validator.Validate("user@123", PresetsValidatorSettings.LoginSettings)); // Invalid char
+            Assert.False(validator.Validate("abcdefghijklmnopqrstuvwxyz", PresetsValidatorSettings.LoginSettings)); // Too long
+        }
+
+        [Fact]
+        public void Validate_WithPasswordPreset_ValidatesCorrectly()
+        {
+            // Arrange
+            var validator = new DataValidator();
+
+            // Act & Assert
+            Assert.True(validator.Validate("Pass_123!", PresetsValidatorSettings.PasswordSettings));
+            Assert.False(validator.Validate("Pass123", PresetsValidatorSettings.PasswordSettings)); // Too short
+            Assert.False(validator.Validate("Pass 123!", PresetsValidatorSettings.PasswordSettings)); // Space not allowed
+            Assert.True(validator.Validate("Password_123!@#$%^&*()-+=<>?", PresetsValidatorSettings.PasswordSettings));
         }
     }
 }

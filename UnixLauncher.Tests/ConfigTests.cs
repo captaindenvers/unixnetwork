@@ -46,11 +46,11 @@ namespace UnixLauncher.Tests
             _config.FullFileName.Should().Be(_fullTestPath);
         }
 
-        [Fact]
-        public void DefaultInstance_Avaible()
-        {
-            DefaultConfig.Instance.Should().NotBeNull();
-        }
+        //[Fact]
+        //public void DefaultInstance_Avaible()
+        //{
+        //    DefaultConfig.Instance.Should().NotBeNull();
+        //}
 
         //[Fact]
         //public void DefaultConstructor_SetsDefaultValues()

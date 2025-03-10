@@ -5,10 +5,10 @@ namespace UnixLauncher.Core.Config
 {
     class DefaultConfig : IConfig
     {
-        private static readonly Lazy<IConfig> _instance =
-            new(() => new DefaultConfig());
+        //private static readonly Lazy<IConfig> _instance =
+        //    new(() => new DefaultConfig());
 
-        public static IConfig Instance { get { return _instance.Value; } }
+        //public static IConfig Instance { get { return _instance.Value; } }
 
         // Имя файла конфигурации
         public string FileName { get; private set; } = "launcher.cfg";
@@ -28,7 +28,7 @@ namespace UnixLauncher.Core.Config
             // тут будут данные... обязательно будут...
         ];
 
-        private DefaultConfig() { }
+        public DefaultConfig() { }
 
         public DefaultConfig(string fileName,
                              string pathToFile,

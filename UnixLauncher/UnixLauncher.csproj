@@ -21,6 +21,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.2" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.6.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Resource Include="Resourses\minecraftScreenshot1.jpg" />
     <Resource Include="Resourses\minecraftScreenshot2.jpg" />
     <Resource Include="Resourses\minecraftScreenshot3.jpg" />

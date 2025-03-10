@@ -1,39 +1,41 @@
-﻿namespace UnixLauncher.Core.Tokens
+﻿using Microsoft.IdentityModel.JsonWebTokens;
+using System.IdentityModel.Tokens.Jwt;
+namespace UnixLauncher.Core.Tokens
 {
     /// <summary>
     /// Используйте ToString(), чтобы получить jwt.
     /// </summary>
-    class Token
+    public class Token
     {
-        public DateTime StartLifeTime { get; private set; }
-        public DateTime EndOfLifeTime { get; private set; }
-        public TimeSpan LifeTime => EndOfLifeTime - StartLifeTime;
-        public TimeSpan RemainingLifeTime => DateTime.Now - StartLifeTime;
-        public TokenType TokenType { get; private set; }
+        public static readonly Token Empty = Token.FromString(string.Empty);
+        public string AccessToken { get; }
+        public DateTime? ExpiresAt { get; }
 
-        private readonly string _token = string.Empty;
-
-        public Token(string token, TokenType tokenType, DateTime endOfLifeTime)
+        public Token(string accessToken)
         {
-            _token = token;
-            TokenType = tokenType;
-            StartLifeTime = DateTime.Now;
-            EndOfLifeTime = endOfLifeTime;
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new ArgumentException("Token value cannot be empty", nameof(accessToken));
+
+            AccessToken = accessToken;
+
+            // Пытаемся декодировать токен и извлечь дату истечения (claim "exp")
+            var handler = new JwtSecurityTokenHandler();
+            if (handler.CanReadToken(accessToken))
+            {
+                var jwtToken = handler.ReadJwtToken(accessToken);
+                var expClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "exp")?.Value;
+                if (expClaim != null && long.TryParse(expClaim, out long exp))
+                {
+                    // Обычно exp задаётся в секундах с начала эпохи
+                    ExpiresAt = DateTimeOffset.FromUnixTimeSeconds(exp).UtcDateTime;
+                }
+            }
         }
 
-        public Token(string token, TokenType tokenType, DateTime startLifeTime, DateTime endOfLifeTime)
-        {
-            _token = token;
-            TokenType = tokenType;
-            StartLifeTime = startLifeTime;
-            EndOfLifeTime = endOfLifeTime;
-        }
+        public bool IsExpired => ExpiresAt.HasValue && DateTime.UtcNow >= ExpiresAt;
 
+        public static Token FromString(string token) { return new(token);  }
 
-        /// <returns> (string) Token</returns>
-        public override string ToString()
-        {
-            return _token;
-        }
+        public override string ToString() => AccessToken;
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace UnixLauncher.Core.Managers
+namespace UnixLauncher.Core.Providers
 {
     static class AppDataProvider
     {

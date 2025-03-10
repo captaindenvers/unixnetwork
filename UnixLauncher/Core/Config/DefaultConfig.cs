@@ -1,5 +1,5 @@
 ﻿using System.IO;
-using UnixLauncher.Core.Managers;
+using UnixLauncher.Core.Providers;
 
 namespace UnixLauncher.Core.Config
 {

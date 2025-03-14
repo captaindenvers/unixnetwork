@@ -1,5 +1,4 @@
-﻿using Microsoft.IdentityModel.JsonWebTokens;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 namespace UnixLauncher.Core.Tokens
 {
     /// <summary>

@@ -2,7 +2,8 @@
 namespace UnixLauncher.Core.Tokens
 {
     /// <summary>
-    /// Используйте ToString(), чтобы получить jwt.
+    /// Класс, отвечающий за тип данных JWT токена с некоторыми предварительными
+    /// проверками и информацией.
     /// </summary>
     public class Token
     {
@@ -33,8 +34,15 @@ namespace UnixLauncher.Core.Tokens
 
         public bool IsExpired => ExpiresAt.HasValue && DateTime.UtcNow >= ExpiresAt;
 
+        /// <summary>
+        /// Создает токен из строки.
+        /// </summary>
+        /// <param name="token">токен в формате string</param>
+        /// <returns>(Token) - токен</returns>
         public static Token FromString(string token) { return new(token);  }
 
+        /// <summary>(Overrided)</summary>
+        /// <returns>(string) - возвращает строковое воплощение jwt токена</returns>
         public override string ToString() => AccessToken;
     }
 }

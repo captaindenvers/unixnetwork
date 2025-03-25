@@ -29,7 +29,7 @@ namespace UnixLauncher.Core.MinecraftClient
 
             if (kbRAM < 1)
                 throw new ArgumentException("Core error: IMemoryProvider gave out too " +
-                    "little RAM (How does it even work if we have <1KB of RAM?)");
+                    "little RAM (How does it even work if we have <1KB of RAM?)", nameof(kbRAM));
 
             // --- Calculating part of max RAM
             long mbRAM = kbRAM / 1024;
@@ -66,7 +66,7 @@ namespace UnixLauncher.Core.MinecraftClient
 
         /// <summary>
         /// Добавляет аргумент в stringBuilder.
-        /// В переменной after в конце оставляйте пробел.
+        /// В переменной after пробел автоматически НЕ ставится.
         /// </summary>
         private void AddArgument(string before, object? arg, string after)
         {
@@ -78,10 +78,10 @@ namespace UnixLauncher.Core.MinecraftClient
         private void CheckRAM(int megabytes) 
         {
             if (megabytes < MIN_RAM)
-                throw new ArgumentException($"RAM can not be lower {MIN_RAM} MB.");
+                throw new ArgumentException($"RAM can not be lower {MIN_RAM} MB.", nameof(megabytes));
 
             if (megabytes > MAX_RAM)
-                throw new ArgumentException($"RAM can not be higher {MAX_RAM} MB. ({PART_FROM_MAX_RAM}% from max RAM)");
+                throw new ArgumentException($"RAM can not be higher {MAX_RAM} MB. ({PART_FROM_MAX_RAM}% from max RAM)", nameof(megabytes));
         }
     }
 }

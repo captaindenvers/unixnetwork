@@ -36,7 +36,7 @@ namespace UnixLauncher
                 options.TokenDirectory = Path.Combine(AppDataProvider.GetFolder(), "User Secret"));
 
             // Сервисы уровня приложения
-            services.AddSingleton<MinecraftStartLineBuilder>();
+            services.AddSingleton<MCStartLineBuilder>();
             services.AddSingleton<IMemoryProvider, FuncsRAM>();
             services.AddSingleton<ITokensProvider>(provider =>
                 new FileTokenProvider(provider.GetRequiredService<IOptions<TokenProviderOptions>>().Value));

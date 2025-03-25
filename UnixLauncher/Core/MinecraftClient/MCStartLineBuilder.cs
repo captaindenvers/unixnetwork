@@ -3,16 +3,23 @@ using UnixLauncher.Core.Misc;
 
 namespace UnixLauncher.Core.MinecraftClient
 {
-    internal class MinecraftStartLineBuilder
+    internal class MCStartLineBuilder
     {
         private readonly StringBuilder stringBuilder;
         private readonly IMemoryProvider memoryProvider;
 
+
         private const long MIN_RAM = 1024; // MB
+
+        // Больше этой части нельзя выделить оперативку
+        // не уверен, насколько это обосновано, но кажется, лучше оставить для системы
         private const int PART_FROM_MAX_RAM = 70; // %
         private readonly long MAX_RAM;
 
-        public MinecraftStartLineBuilder(IMemoryProvider memoryProvider)
+        // TODO:
+        // - проверь аймеморипровайдер
+
+        public MCStartLineBuilder(IMemoryProvider memoryProvider)
         {
             // --- DI
             this.memoryProvider = memoryProvider;
@@ -32,7 +39,7 @@ namespace UnixLauncher.Core.MinecraftClient
             stringBuilder.Append("java ");
         }
 
-        public MinecraftStartLineBuilder SetXmx(int megabytes)
+        public MCStartLineBuilder SetXmx(int megabytes)
         {
             CheckRAM(megabytes);
 
@@ -46,7 +53,7 @@ namespace UnixLauncher.Core.MinecraftClient
             return this;
         }
 
-        public MinecraftStartLineBuilder SetXms(int megabytes)
+        public MCStartLineBuilder SetXms(int megabytes)
         {
             CheckRAM(megabytes);
 

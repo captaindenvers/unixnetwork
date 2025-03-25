@@ -5,7 +5,7 @@ namespace UnixLauncher.Core.MinecraftClient
 {
     internal class MCStartLineBuilder
     {
-        private readonly StringBuilder stringBuilder;
+        private readonly MCStartLine buildInstance;
         private readonly IMemoryProvider memoryProvider;
 
 
@@ -24,19 +24,18 @@ namespace UnixLauncher.Core.MinecraftClient
             // --- DI
             this.memoryProvider = memoryProvider;
 
-            // Get RAM
+            // --- Get RAM
             memoryProvider.GetRAM(out long kbRAM);
 
             if (kbRAM < 1)
                 throw new ArgumentException("Core error: IMemoryProvider gave out too " +
-                    "little RAM (How does it even work if we have <1KB of RAM?)", nameof(kbRAM));
+                    "little RAM (How does it even work if we have <1KB of RAM?)");
 
             // --- Calculating part of max RAM
             long mbRAM = kbRAM / 1024;
             MAX_RAM = mbRAM * PART_FROM_MAX_RAM / 100;
 
-            stringBuilder = new();
-            stringBuilder.Append("java ");
+            buildInstance = new();
         }
 
         public MCStartLineBuilder SetXmx(int megabytes)
@@ -48,7 +47,7 @@ namespace UnixLauncher.Core.MinecraftClient
             //stringBuilder.Append("-Xmx");
             //stringBuilder.Append(megabytes);
             //stringBuilder.Append("m ");
-            AddArgument("-Xmx", megabytes, "m ");
+            buildInstance.AddArgument("-Xmx", megabytes, "m ");
 
             return this;
         }
@@ -57,23 +56,14 @@ namespace UnixLauncher.Core.MinecraftClient
         {
             CheckRAM(megabytes);
 
-            AddArgument("-Xms", megabytes, "m ");
+            buildInstance.AddArgument("-Xms", megabytes, "m ");
 
             return this;
         }
 
-        public string Build() { return stringBuilder.ToString(); }
-
-        /// <summary>
-        /// Добавляет аргумент в stringBuilder.
-        /// В переменной after пробел автоматически НЕ ставится.
-        /// </summary>
-        private void AddArgument(string before, object? arg, string after)
-        {
-            stringBuilder.Append(before);
-            stringBuilder.Append(arg);
-            stringBuilder.Append(after);
-        }
+        // Если MCStartLine начнет обрастать функционалом,
+        // вместо string надо начать отдавать сам объект
+        public string Build() { return buildInstance.ToString(); }
 
         private void CheckRAM(int megabytes) 
         {

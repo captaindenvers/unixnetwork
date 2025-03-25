@@ -42,11 +42,6 @@ namespace UnixLauncher.Core.MinecraftClient
         {
             CheckRAM(megabytes);
 
-            // Пример, как оно выглядело бы без этой функции
-            // Если будут странные приведения у stringBuilder, заменим на это
-            //stringBuilder.Append("-Xmx");
-            //stringBuilder.Append(megabytes);
-            //stringBuilder.Append("m ");
             buildInstance.AddArgument("-Xmx", megabytes, "m ");
 
             return this;

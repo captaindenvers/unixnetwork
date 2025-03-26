@@ -6,8 +6,8 @@ namespace UnixLauncher.Core.Tokens
     class FileTokenProvider : ITokensProvider
     {
         private readonly string _tokenDirectory;
-        private readonly string _authFileName = "auth.jwt";
-        private readonly string _refreshFileName = "refresh.jwt";
+        private readonly string _authFileName = "auth.token";
+        
 
         public FileTokenProvider(TokenProviderOptions options)
         {
@@ -16,17 +16,12 @@ namespace UnixLauncher.Core.Tokens
         }
 
         // --- Реализация интерфейса
-        public async Task<Token> GetAuthTokenAsync() =>
+        public async Task<string> GetAuthTokenAsync() =>
             await ReadTokenAsync(Path.Combine(_tokenDirectory, _authFileName));
 
-        public async Task<Token> GetRefreshTokenAsync() =>
-            await ReadTokenAsync(Path.Combine(_tokenDirectory, _refreshFileName));
-
-        public async Task SaveAuthTokenAsync(Token token) =>
+        public async Task SaveAuthTokenAsync(string token) =>
             await WriteTokenAsync(Path.Combine(_tokenDirectory, _authFileName), token);
 
-        public async Task SaveRefreshTokenAsync(Token token) =>
-            await WriteTokenAsync(Path.Combine(_tokenDirectory, _refreshFileName), token);
 
         private void EnsureDirectoryExists(string path)
         {
@@ -40,13 +35,13 @@ namespace UnixLauncher.Core.Tokens
         /// </summary>
         /// <param name="filePath">Полный путь к файлу</param>
         /// <returns>Токен</returns>
-        private async Task<Token> ReadTokenAsync(string filePath)
+        private async Task<string> ReadTokenAsync(string filePath)
         {
             if (!File.Exists(filePath))
-                return Token.Empty;
+                return string.Empty;
 
             var content = await File.ReadAllTextAsync(filePath);
-            return Token.FromString(content);
+            return content;
         }
 
         /// <summary>
@@ -54,9 +49,9 @@ namespace UnixLauncher.Core.Tokens
         /// </summary>
         /// <param name="filePath">Полный путь к файлу</param>
         /// <param name="token">Токен</param>
-        private async Task WriteTokenAsync(string filePath, Token token)
+        private async Task WriteTokenAsync(string filePath, string token)
         {
-            await File.WriteAllTextAsync(filePath, token.ToString());
+            await File.WriteAllTextAsync(filePath, token);
         }
     }
 }

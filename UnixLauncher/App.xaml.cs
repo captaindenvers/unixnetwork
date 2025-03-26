@@ -10,6 +10,7 @@ using UnixLauncher.Core.Misc;
 using UnixLauncher.Core.Tokens;
 using UnixLauncher.Core.Providers;
 using UnixLauncher.Core.MinecraftClient;
+using UnixLauncher.Core.Logger;
 
 namespace UnixLauncher
 {
@@ -34,6 +35,17 @@ namespace UnixLauncher
             // Конфигурация
             services.Configure<TokenProviderOptions>(options =>
                 options.TokenDirectory = Path.Combine(AppDataProvider.GetFolder(), "User Secret"));
+            services.Configure<LoggerOptions>(options =>
+            {
+                options.MinLogLevel = LogLevel.Trace;
+                options.Directory = AppDataProvider.GetFolder();
+                options.FileName = "logs.txt";
+            });
+
+
+            // Логи
+            services.AddSingleton<ILogger, FileLogger>(logger =>
+                new(logger.GetRequiredService<IOptions<LoggerOptions>>().Value));
 
             // Сервисы уровня приложения
             services.AddSingleton<MCStartLineBuilder>();

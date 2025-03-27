@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Text;
-using System.Threading.Tasks;
+using UnixLauncher.Core.Misc;
 using UnixLauncher.Core.Providers;
 
 namespace UnixLauncher.Core.Logger
 {
     class FileLogger : ILogger
     {
+        private readonly object _lock = new();
+
         private LogLevel _minLogLevel;
 
         private List<string> _scopes;
@@ -25,28 +24,34 @@ namespace UnixLauncher.Core.Logger
         public FileLogger(LoggerOptions options)
         {
             _minLogLevel = options.MinLogLevel;
-            _scopes = new List<string>();
+            _scopes = new();
             _sbLogMessage = new();
 
             // Выбор рабочей папки
             string fullPathWithName;
+
             if (options.Directory != null && options.FileName != null)
                 fullPathWithName = Path.Combine(options.Directory, options.FileName);            
             else
                 fullPathWithName = Path.Combine(AppDataProvider.GetFolder(), _fileName);
-            
+
+            // Удостоверяемся, что целевая директория доступна и по необходимости создаем
+            string directory = Path.GetDirectoryName(fullPathWithName)!;
+            if (directory != null && !Directory.Exists(directory))
+                Directory.CreateDirectory(directory);
+
             _fileStream = new(fullPathWithName, true);
         }
 
         public IDisposable BeginScope<TState>(TState state)
         {
             if (state == null)
-                return null!;
+                return NullDisposable.Instance;
 
-            string scope = state.ToString()!;
+            string? scope = state.ToString();
 
             if (string.IsNullOrEmpty(scope))
-                return null!;
+                return NullDisposable.Instance;
 
             _scopes.Add(scope);
 
@@ -76,14 +81,16 @@ namespace UnixLauncher.Core.Logger
         public async Task ErrorAsync(string message, Exception exception)
             => await Log(LogLevel.Error, message, exception);
 
+        public async Task ErrorAsync(Exception exception)
+            => await Log(LogLevel.Error, exception.Message, exception);
+
         private async Task Log(LogLevel level, string message, Exception? exception = null)
         {
             if (!IsEnabled(level))
                 return;
 
             string logString = GenerateLogString(level, message, exception);
-
-            Console.WriteLine(logString);
+            
             try
             {
                 await _fileStream.WriteLineAsync(logString);
@@ -98,25 +105,28 @@ namespace UnixLauncher.Core.Logger
         {
             string result;
 
-            // Время
-            _sbLogMessage.Append($"{DateTime.Now} ");
+            lock (_lock)
+            {
+                // Время
+                _sbLogMessage.Append($"{DateTime.Now} ");
 
-            // Log level
-            _sbLogMessage.Append($"[{level.ToString()}] ");
+                // Log level
+                _sbLogMessage.Append($"[{level.ToString()}] ");
 
-            // Скоупы
-            foreach (var scope in _scopes)
-                _sbLogMessage.Append($"<{scope}> ");
+                // Скоупы
+                foreach (var scope in _scopes)
+                    _sbLogMessage.Append($"<{scope}> ");
 
-            // Сообщение
-            _sbLogMessage.Append(message);
+                // Сообщение
+                _sbLogMessage.Append(message);
 
-            // Ошибка
-            if (exception != null)
-                _sbLogMessage.Append(exception.ToString());
+                // Ошибка
+                if (exception != null)
+                    _sbLogMessage.Append(exception.ToString());
 
-            result = _sbLogMessage.ToString();
-            _sbLogMessage.Clear();
+                result = _sbLogMessage.ToString();
+                _sbLogMessage.Clear();
+            }
 
             return result;
         }
@@ -129,10 +139,11 @@ namespace UnixLauncher.Core.Logger
         {
             string fileName = "loggerCrashOutput.txt";
 
-            StreamWriter streamWriter = new(fileName, true);
-
-            streamWriter.WriteLine(message);
-            streamWriter.WriteLine(exception.ToString());
+            using (StreamWriter streamWriter = new(fileName, true))
+            {
+                streamWriter.WriteLine(message);
+                streamWriter.WriteLine(exception.ToString());
+            }
         }
 
         public void Dispose()

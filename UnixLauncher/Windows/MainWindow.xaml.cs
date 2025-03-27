@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using UnixLauncher.Core.Logger;
+using System.Windows;
 
 namespace UnixLauncher.Windows
 {

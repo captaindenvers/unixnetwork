@@ -27,7 +27,7 @@ namespace UnixLauncher.Core.Logger
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!_disposed)
+            if (!_scopes.Contains(_scope) && _disposed)
             {
                 if (disposing)
                 {

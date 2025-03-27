@@ -16,5 +16,6 @@ namespace UnixLauncher.Core.Logger
         Task WarnAsync(string message);
         Task ErrorAsync(string message);
         Task ErrorAsync(string message,  Exception exception);
+        Task ErrorAsync(Exception exception);
     }
 }

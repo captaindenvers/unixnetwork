@@ -5,9 +5,10 @@ using UnixLauncher.Core.Providers;
 
 namespace UnixLauncher.Core.Logger
 {
-    class FileLogger : ILogger
+    class FileLogger : ILogger, IAsyncDisposable
     {
-        private readonly object _lock = new();
+        private readonly object _sbLock = new();
+        private readonly SemaphoreSlim _writeLock = new SemaphoreSlim(1, 1);
 
         private LogLevel _minLogLevel;
 
@@ -27,9 +28,9 @@ namespace UnixLauncher.Core.Logger
             _scopes = new();
             _sbLogMessage = new();
 
+
             // Выбор рабочей папки
             string fullPathWithName;
-
             if (options.Directory != null && options.FileName != null)
                 fullPathWithName = Path.Combine(options.Directory, options.FileName);            
             else
@@ -40,7 +41,11 @@ namespace UnixLauncher.Core.Logger
             if (directory != null && !Directory.Exists(directory))
                 Directory.CreateDirectory(directory);
 
-            _fileStream = new(fullPathWithName, true);
+            _fileStream = new StreamWriter(new FileStream(fullPathWithName,
+                                                          FileMode.Append,
+                                                          FileAccess.Write,
+                                                          FileShare.ReadWrite));
+
         }
 
         public IDisposable BeginScope<TState>(TState state)
@@ -90,10 +95,19 @@ namespace UnixLauncher.Core.Logger
                 return;
 
             string logString = GenerateLogString(level, message, exception);
-            
+
             try
             {
-                await _fileStream.WriteLineAsync(logString);
+                await _writeLock.WaitAsync();
+                try
+                {
+                    await _fileStream.WriteLineAsync(logString);
+                    await _fileStream.FlushAsync();
+                }
+                finally
+                {
+                    _writeLock.Release();
+                }
             }
             catch (Exception ex)
             {
@@ -105,7 +119,7 @@ namespace UnixLauncher.Core.Logger
         {
             string result;
 
-            lock (_lock)
+            lock (_sbLock)
             {
                 // Время
                 _sbLogMessage.Append($"{DateTime.Now} ");
@@ -158,10 +172,35 @@ namespace UnixLauncher.Core.Logger
             {
                 if (disposing)
                 {
+                    _fileStream?.Flush();
                     _fileStream?.Dispose();
+
+                    _writeLock.Dispose();
                 }
 
+
                 _disposed = true;
+            }
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (!_disposed)
+            {
+                // Гарантируем, что все записи завершены
+                await _writeLock.WaitAsync();
+                try
+                {
+                    await _fileStream.FlushAsync();
+                }
+                finally
+                {
+                    _writeLock.Release();
+                }
+                await _fileStream.DisposeAsync();
+                _writeLock.Dispose();
+                _disposed = true;
+                GC.SuppressFinalize(this);
             }
         }
     }

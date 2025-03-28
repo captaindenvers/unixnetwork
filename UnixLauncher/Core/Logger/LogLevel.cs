@@ -1,5 +1,8 @@
 ﻿namespace UnixLauncher.Core.Logger
 {
+    /// <summary>
+    /// Trace --> Debug --> Info --> Warn --> Error 
+    /// </summary>
     public enum LogLevel
     {
         Trace = 0,

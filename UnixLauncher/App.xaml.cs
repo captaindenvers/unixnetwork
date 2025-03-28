@@ -44,8 +44,8 @@ namespace UnixLauncher
 
 
             // Логи
-            services.AddSingleton<ILogger, FileLogger>(logger =>
-                new(logger.GetRequiredService<IOptions<LoggerOptions>>().Value));
+            services.AddSingleton<ILogger, FileLogger>(provider =>
+                new(provider.GetRequiredService<IOptions<LoggerOptions>>().Value));
 
             // Сервисы уровня приложения
             services.AddSingleton<MCStartLineBuilder>();

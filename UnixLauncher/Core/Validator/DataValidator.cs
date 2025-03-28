@@ -17,7 +17,7 @@
             if (text.Length > validatorSettings.MaxLength || text.Length < validatorSettings.MinLength)
                 return false;
 
-            // Поиск несоответствующих - провалено.
+            // Поиск несоответствующих
             if (!text.All(c => validatorSettings.AllowedSymbols.Contains(c)))
                 return false;
 

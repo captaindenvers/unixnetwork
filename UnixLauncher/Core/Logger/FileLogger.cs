@@ -115,6 +115,13 @@ namespace UnixLauncher.Core.Logger
             }
         }      
         
+        /// <summary>
+        /// Собирает строку для записи в логи
+        /// </summary>
+        /// <param name="level">Уровень логирования</param>
+        /// <param name="message">Непосредственное сообщение</param>
+        /// <param name="exception">Ошибка. Может быть null. Стандартное значение null.</param>
+        /// <returns></returns>
         private string GenerateLogString(LogLevel level, string message, Exception? exception = null)
         {
             string result;

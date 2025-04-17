@@ -1,5 +1,7 @@
 using FluentAssertions;
+using System.Runtime.CompilerServices;
 using UnixLauncher.Core.Config;
+using UnixLauncher.Core.Logger;
 
 namespace UnixLauncher.Tests
 {
@@ -8,28 +10,44 @@ namespace UnixLauncher.Tests
         private readonly string _testDirectory;
         private readonly string _testFileName;
         private readonly string _fullTestPath;
-        private readonly List<KeyValuePair<string, string>> _testDefaultValues;
+        private readonly List<(string key, string value, string? comment)> _testDefaultValues;
         private IConfig _config;
+        private ILogger _defaultLogger;
 
         public DefaultConfigTests()
         {
             // Setup test environment
             _testDirectory = Path.Combine(Path.GetTempPath(), "UnixLauncherTests", Guid.NewGuid().ToString());
+            //_testDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "UnixLauncherTests", Guid.NewGuid().ToString());
             _testFileName = "test_launcher.cfg";
             Directory.CreateDirectory(_testDirectory);
             _fullTestPath = Path.Combine(_testDirectory, _testFileName);
 
-            _testDefaultValues = new List<KeyValuePair<string, string>>
+            LoggerOptions loggerOptions = new()
             {
-                new KeyValuePair<string, string>("Theme", "Dark"),
-                new KeyValuePair<string, string>("Language", "English")
+                FileName = "TestLogs.txt",
+                Directory = _testDirectory,
+                MinLogLevel = LogLevel.Trace,
             };
 
-            _config = new DefaultConfig(_testFileName, _testDirectory + Path.DirectorySeparatorChar, _testDefaultValues);
+            _defaultLogger = new FileLogger(loggerOptions);
+
+            _testDefaultValues = new List<(string, string, string?)>
+            {
+                new("Theme", "Dark", "idk, test??"),
+                new("Language", "English", "another test???")
+            };
+
+            _config = new DefaultConfig(_defaultLogger,
+                                        _testFileName,
+                                        _testDirectory + Path.DirectorySeparatorChar,
+                                        _testDefaultValues);
         }
 
         public void Dispose()
         {
+            _config.Dispose();
+
             // Clean up test environment
             if (Directory.Exists(_testDirectory))
             {
@@ -103,52 +121,52 @@ namespace UnixLauncher.Tests
         }
 
         [Fact]
-        public void GetProperty_ReturnsNull_WhenFileDoesNotExist()
+        public async Task GetPropertyAsync_ReturnsEmpty_WhenFileDoesNotExist()
         {
             // Arrange - ensure file doesn't exist
             if (File.Exists(_fullTestPath))
                 File.Delete(_fullTestPath);
 
             // Act
-            string? result = _config.GetProperty("AnyKey");
+            string? result = await _config.GetPropertyAsync("AnyKey");
 
             // Assert
-            result.Should().BeNull();
+            result.Should().BeEmpty();
         }
 
         [Fact]
-        public async Task GetProperty_ReturnsValue_WhenKeyExists()
+        public async Task GetPropertyAsync_ReturnsValue_WhenKeyExists()
         {
             // Arrange
             await _config.CreateOrSetProperty("ExistingKey", "ExistingValue");
 
             // Act
-            string? result = _config.GetProperty("ExistingKey");
+            string? result = await _config.GetPropertyAsync("ExistingKey");
 
             // Assert
             result.Should().Be("ExistingValue");
         }
 
         [Fact]
-        public async Task GetProperty_ReturnsNull_WhenKeyDoesNotExist()
+        public async Task GetPropertyAsync_ReturnsNull_WhenKeyDoesNotExist()
         {
             // Arrange
             await _config.CreateOrSetProperty("SomeKey", "SomeValue");
 
             // Act
-            string? result = _config.GetProperty("NonExistentKey");
+            string? result = await _config.GetPropertyAsync("NonExistentKey");
 
             // Assert
-            result.Should().BeNull();
+            result.Should().BeEmpty();
         }
 
         [Fact]
-        public async Task GetProperty_IgnoresComments_InConfigFile()
+        public async Task GetPropertyAsync_IgnoresComments_InConfigFile()
         {
             // Arrange - create a file with comments manually
             string fileContent =
                 "# This is a comment\n" +
-                "Key1=Value1 # This is an inline comment\n" +
+                "Key1=Value1 # This is NOT a comment\n" +
                 "# Key2=Value2 This key is commented out\n" +
                 "Key3=Value3";
 
@@ -156,18 +174,18 @@ namespace UnixLauncher.Tests
             await File.WriteAllTextAsync(_fullTestPath, fileContent);
 
             // Act
-            string? result1 = _config.GetProperty("Key1");
-            string? result2 = _config.GetProperty("Key2");
-            string? result3 = _config.GetProperty("Key3");
+            string? result1 = await _config.GetPropertyAsync("Key1");
+            string? result2 = await _config.GetPropertyAsync("Key2");
+            string? result3 = await _config.GetPropertyAsync("Key3");
 
             // Assert
-            result1.Should().Be("Value1");
-            result2.Should().BeNull();
+            result1.Should().Be("Value1 # This is NOT a comment");
+            result2.Should().BeEmpty();
             result3.Should().Be("Value3");
         }
 
         [Fact]
-        public async Task GetProperty_HandlesEmptyLines_InConfigFile()
+        public async Task GetPropertyAsync_HandlesEmptyLines_InConfigFile()
         {
             // Arrange
             string fileContent =
@@ -180,8 +198,8 @@ namespace UnixLauncher.Tests
             await File.WriteAllTextAsync(_fullTestPath, fileContent);
 
             // Act
-            string? result1 = _config.GetProperty("Key1");
-            string? result2 = _config.GetProperty("Key2");
+            string? result1 = await _config.GetPropertyAsync("Key1");
+            string? result2 = await _config.GetPropertyAsync("Key2");
 
             // Assert
             result1.Should().Be("Value1");
@@ -195,7 +213,7 @@ namespace UnixLauncher.Tests
             await _config.CreateOrSetProperty("ExistingKey", "ExistingValue");
 
             // Act
-            bool result = _config.TryGetProperty("NonExistentKey", out string value);
+            bool result = _config.TryGetProperty("NonExistentKey", out string? value);
 
             // Assert
             result.Should().BeFalse();
@@ -227,7 +245,7 @@ namespace UnixLauncher.Tests
             // Act
             bool intResult = _config.TryGetProperty("IntKey", out int intValue);
             bool boolResult = _config.TryGetProperty("BoolKey", out bool boolValue);
-            bool stringResult = _config.TryGetProperty("StringKey", out string stringValue);
+            bool stringResult = _config.TryGetProperty("StringKey", out string? stringValue);
 
             // Assert
             intResult.Should().BeTrue();
@@ -249,9 +267,14 @@ namespace UnixLauncher.Tests
             await _config.CreateOrSetProperty("EmptyValue", "");
 
             // Assert
-            _config.GetProperty("KeyWithEquals").Should().Be("Value=WithEquals");
-            _config.GetProperty("KeyWithHash").Should().Be("Value");
-            _config.GetProperty("EmptyValue").Should().BeNull();
+            string? t1 = await _config.GetPropertyAsync("KeyWithEquals");
+            t1.Should().Be("Value=WithEquals");
+
+            string? t2 = await _config.GetPropertyAsync("KeyWithHash");
+            t2.Should().Be("Value#WithHash"); // Value#WithHash а не просто Value
+
+            string? t3 = await _config.GetPropertyAsync("EmptyValue");
+            t3.Should().Be(""); // Пустая строка, а не null
         }
 
         [Fact]
@@ -265,20 +288,23 @@ namespace UnixLauncher.Tests
             await _config.CreateOrSetProperty("Key1", "UpdatedValue");
 
             // Assert
-            _config.GetProperty("Key1").Should().Be("UpdatedValue");
-            _config.GetProperty("Key2").Should().Be("Value2");
+            string? t1 = await _config.GetPropertyAsync("Key1");
+            t1.Should().Be("UpdatedValue");
+
+            string? t2 = await _config.GetPropertyAsync("Key2");
+            t2.Should().Be("Value2");
         }
 
         [Fact]
-        public async Task GetProperty_IsCaseInsensitive()
+        public async Task GetPropertyAsync_IsCaseInsensitive()
         {
             // Arrange
             await _config.CreateOrSetProperty("CaseSensitiveKey", "Value");
 
             // Act
-            string? result1 = _config.GetProperty("casesensitivekey");
-            string? result2 = _config.GetProperty("CASESENSITIVEKEY");
-            string? result3 = _config.GetProperty("CaseSensitiveKey");
+            string? result1 = await _config.GetPropertyAsync("casesensitivekey");
+            string? result2 = await _config.GetPropertyAsync("CASESENSITIVEKEY");
+            string? result3 = await _config.GetPropertyAsync("CaseSensitiveKey");
 
             // Assert
             result1.Should().Be("Value");
@@ -293,18 +319,22 @@ namespace UnixLauncher.Tests
             await _config.CreateOrSetProperty("Key#WithHash", "Value");
 
             // Assert
-            _config.GetProperty("Key#WithHash").Should().BeNull();
+            string? result = await _config.GetPropertyAsync("Key");
+            result.Should().BeEmpty();
+
+            string? result2 = await _config.GetPropertyAsync("Key#WithHash");
+            result2.Should().Be("Value");
         }
 
         [Fact]
-        public async Task GetProperty_HandlesComplexCommentScenarios()
+        public async Task GetPropertyAsync_HandlesComplexCommentScenarios()
         {
             // Arrange - create a file with tricky comments
             string fileContent =
                 "SimpleKey=SimpleValue\n" +
                 "TrickyKey=Value # With # Multiple # Hashes\n" +
                 "# Comment=NotAValue\n" +
-                "Key=Value####NotValue\n" +
+                "Key=Value####StillValue\n" +
                 "EmptyComment=#\n" +
                 "HashPrefix=#Value";
 
@@ -312,12 +342,23 @@ namespace UnixLauncher.Tests
             await File.WriteAllTextAsync(_fullTestPath, fileContent);
 
             // Act & Assert
-            _config.GetProperty("SimpleKey").Should().Be("SimpleValue");
-            _config.GetProperty("TrickyKey").Should().Be("Value");
-            _config.GetProperty("Comment").Should().BeNull();
-            _config.GetProperty("Key").Should().Be("Value");
-            _config.GetProperty("EmptyComment").Should().BeNull();
-            _config.GetProperty("HashPrefix").Should().BeNull();
+            string? simpleKey = await _config.GetPropertyAsync("SimpleKey");
+            simpleKey.Should().Be("SimpleValue");
+
+            string? trickyKey = await _config.GetPropertyAsync("TrickyKey");
+            trickyKey.Should().Be("Value # With # Multiple # Hashes");
+
+            string? comment = await _config.GetPropertyAsync("Comment");
+            comment.Should().BeEmpty();
+
+            string? key = await _config.GetPropertyAsync("Key");
+            key.Should().Be("Value####StillValue");
+
+            string? emptyComment = await _config.GetPropertyAsync("EmptyComment");
+            emptyComment.Should().Be("#");
+
+            string? hashPrefix = await _config.GetPropertyAsync("HashPrefix");
+            hashPrefix.Should().Be("#Value");
         }
 
         [Fact]
@@ -340,14 +381,16 @@ namespace UnixLauncher.Tests
         public async Task CreateOrSetProperty_HandlesValuesWithSpecialCharacters()
         {
             // Arrange & Act
-            await _config.CreateOrSetProperty("SpecialKey", "Value with spaces, commas, and symbols: !@#$%^&*()");
+            string specialValue = "Value with spaces, commas, and symbols: !@#$%^&*()";
+            await _config.CreateOrSetProperty("SpecialKey", specialValue);
 
             // Assert
-            _config.GetProperty("SpecialKey").Should().Be("Value with spaces, commas, and symbols: !@");
+            string? result = await _config.GetPropertyAsync("SpecialKey");
+            result.Should().Be(specialValue); // Должно вернуть полное значение, а не обрезанное
         }
 
         [Fact]
-        public async Task GetProperty_HandlesInvalidLines()
+        public async Task GetPropertyAsync_HandlesInvalidLines()
         {
             // Arrange - file with invalid lines
             string fileContent =
@@ -360,10 +403,16 @@ namespace UnixLauncher.Tests
             await File.WriteAllTextAsync(_fullTestPath, fileContent);
 
             // Act & Assert
-            _config.GetProperty("ValidKey").Should().Be("ValidValue");
-            _config.GetProperty("InvalidLine-NoEquals").Should().BeNull();
-            _config.GetProperty("").Should().BeNull();
-            _config.GetProperty("KeyWithoutValue").Should().BeNull();
+            string validKey = await _config.GetPropertyAsync("ValidKey");
+            validKey.Should().Be("ValidValue");
+
+            string invalidLine = await _config.GetPropertyAsync("InvalidLine-NoEquals");
+            invalidLine.Should().BeEmpty();
+
+            await Assert.ThrowsAsync<ArgumentException>(async () => await _config.GetPropertyAsync(""));
+
+            string keyWithoutValue = await _config.GetPropertyAsync("KeyWithoutValue");
+            keyWithoutValue.Should().BeEmpty(); // Пустая строка, а не null
         }
     }
 }

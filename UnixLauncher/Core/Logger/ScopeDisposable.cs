@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace UnixLauncher.Core.Logger
+﻿namespace UnixLauncher.Core.Logger
 {
     /// <summary>
     /// Представляет объект, управляющий областью (scope) логирования, который автоматически удаляет свою запись из коллекции при завершении работы.
@@ -16,36 +9,32 @@ namespace UnixLauncher.Core.Logger
     /// 
     /// Обратите внимание, что данный класс следует использовать в конструкции <c>using</c> для гарантированного освобождения ресурсов и своевременного завершения области логирования.
     /// </remarks>
-    public class ScopeDisposable : IDisposable
+    internal class ScopeDisposable : IDisposable
     {
         private readonly string _scope;
         private readonly List<string> _scopes;
+        private readonly object _scopesLock;
         private bool _disposed;
 
-        public ScopeDisposable(string scope, List<string> scopes)
+        public ScopeDisposable(string scope, List<string> scopes, object scopesLock)
         {
             _scope = scope;
             _scopes = scopes;
+            _scopesLock = scopesLock;
+            _disposed = false;
         }
 
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+            if (_disposed)
+                return;
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_scopes.Contains(_scope) && _disposed)
+            lock (_scopesLock)
             {
-                if (disposing)
-                {
-                    // Удаляем текущий скоп только при явном вызове Dispose
-                    _scopes.Remove(_scope);
-                }
-
-                _disposed = true;
+                _scopes.Remove(_scope);
             }
+
+            _disposed = true;
         }
     }
 }

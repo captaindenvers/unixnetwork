@@ -2,50 +2,40 @@
 using System.Text;
 using UnixLauncher.Core.Misc;
 using UnixLauncher.Core.Providers;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace UnixLauncher.Core.Logger
 {
     class FileLogger : ILogger, IAsyncDisposable
     {
         private readonly object _sbLock = new();
-        private readonly SemaphoreSlim _writeLock = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim _writeLock = new(1, 1);
+        private readonly object _scopesLock = new();
 
-        private LogLevel _minLogLevel;
+        private volatile LogLevel _minLogLevel;
+        private readonly string _logFilePath;
+        private volatile bool _disposed;
 
-        private List<string> _scopes;
-       
-        private StringBuilder _sbLogMessage;
-
-        private string _fileName = "logs.txt";
-
-        private StreamWriter _fileStream;
-
-        private bool _disposed;
+        private readonly List<string> _scopes;
+        private readonly StringBuilder _sbLogMessage;
 
         public FileLogger(LoggerOptions options)
         {
             _minLogLevel = options.MinLogLevel;
-            _scopes = new();
-            _sbLogMessage = new();
-
+            _scopes = new List<string>();
+            _sbLogMessage = new StringBuilder();
+            _disposed = false;
 
             // Выбор рабочей папки
-            string fullPathWithName;
             if (options.Directory != null && options.FileName != null)
-                fullPathWithName = Path.Combine(options.Directory, options.FileName);            
+                _logFilePath = Path.Combine(options.Directory, options.FileName);
             else
-                fullPathWithName = Path.Combine(AppDataProvider.GetFolder(), _fileName);
+                _logFilePath = Path.Combine(AppDataProvider.GetFolder(), "logs.txt");
 
             // Удостоверяемся, что целевая директория доступна и по необходимости создаем
-            string directory = Path.GetDirectoryName(fullPathWithName)!;
+            string directory = Path.GetDirectoryName(_logFilePath)!;
             if (directory != null && !Directory.Exists(directory))
                 Directory.CreateDirectory(directory);
-
-            _fileStream = new StreamWriter(new FileStream(fullPathWithName,
-                                                          FileMode.Append,
-                                                          FileAccess.Write,
-                                                          FileShare.ReadWrite));
-
         }
 
         public IDisposable BeginScope<TState>(TState state)
@@ -58,10 +48,14 @@ namespace UnixLauncher.Core.Logger
             if (string.IsNullOrEmpty(scope))
                 return NullDisposable.Instance;
 
-            _scopes.Add(scope);
+            lock (_scopesLock)
+            {
+                _scopes.Add(scope);
+            }
 
-            return new ScopeDisposable(scope, _scopes);
+            return new ScopeDisposable(scope, _scopes, _scopesLock);
         }
+
         public bool IsEnabled(LogLevel level)
         {
             return level >= _minLogLevel;
@@ -70,10 +64,9 @@ namespace UnixLauncher.Core.Logger
         public async Task TraceAsync(string message)
             => await Log(LogLevel.Trace, message);
 
-
         public async Task DebugAsync(string message)
             => await Log(LogLevel.Debug, message);
-        
+
         public async Task InfoAsync(string message)
             => await Log(LogLevel.Info, message);
 
@@ -91,6 +84,9 @@ namespace UnixLauncher.Core.Logger
 
         private async Task Log(LogLevel level, string message, Exception? exception = null)
         {
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(FileLogger));
+
             if (!IsEnabled(level))
                 return;
 
@@ -101,8 +97,16 @@ namespace UnixLauncher.Core.Logger
                 await _writeLock.WaitAsync();
                 try
                 {
-                    await _fileStream.WriteLineAsync(logString);
-                    await _fileStream.FlushAsync();
+                    if (_disposed) // Повторная проверка внутри блокировки
+                        return;
+
+                    // FileShare.ReadWrite позволяет читать файл другим процессам во время записи
+                    using (var fileStream = new FileStream(_logFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+                    using (var writer = new StreamWriter(fileStream, Encoding.UTF8))
+                    {
+                        await writer.WriteLineAsync(logString);
+                        await writer.FlushAsync();
+                    }
                 }
                 finally
                 {
@@ -113,15 +117,14 @@ namespace UnixLauncher.Core.Logger
             {
                 EmergencyResponse("[ERROR] {FileLogger} Ошибка во время записи в файл!", ex);
             }
-        }      
-        
+        }
+
         /// <summary>
         /// Собирает строку для записи в логи
         /// </summary>
         /// <param name="level">Уровень логирования</param>
         /// <param name="message">Непосредственное сообщение</param>
         /// <param name="exception">Ошибка. Может быть null. Стандартное значение null.</param>
-        /// <returns></returns>
         private string GenerateLogString(LogLevel level, string message, Exception? exception = null)
         {
             string result;
@@ -135,8 +138,11 @@ namespace UnixLauncher.Core.Logger
                 _sbLogMessage.Append($"[{level.ToString()}] ");
 
                 // Скоупы
-                foreach (var scope in _scopes)
-                    _sbLogMessage.Append($"<{scope}> ");
+                lock (_scopesLock)
+                {
+                    foreach (var scope in _scopes)
+                        _sbLogMessage.Append($"<{scope}> ");
+                }
 
                 // Сообщение
                 _sbLogMessage.Append(message);
@@ -160,10 +166,32 @@ namespace UnixLauncher.Core.Logger
         {
             string fileName = "loggerCrashOutput.txt";
 
-            using (StreamWriter streamWriter = new(fileName, true))
+            try
             {
-                streamWriter.WriteLine(message);
-                streamWriter.WriteLine(exception.ToString());
+                // Используем блокировку на файл для потокобезопасности
+                using (var fileStream = new FileStream(fileName, FileMode.Append, FileAccess.Write, FileShare.Read))
+                using (var streamWriter = new StreamWriter(fileStream))
+                {
+                    streamWriter.WriteLine(message);
+                    streamWriter.WriteLine(exception.ToString());
+                }
+            }
+            catch (Exception e2)
+            {
+                // В случае критической ошибки ничего не делаем - метод используется как последнее средство
+                // ну, а че вы хотели? рекурсивный вызов самого себя до того момента, пока не переполнится стек?
+                // Можем только помолиться, чтобы этого не происходило.
+                //
+                //          МОЛИТВА ПРОГРАММИСТИЧЕСКАЯ #1
+                // О, всемогущий FileStream и святой StreamWriter,
+                // Храни нас от хаоса многопоточности,
+                // Пусть loggerCrashOutput.txt примет все наши грехи ошибок,
+                // А Exception.ToString() изольет свет истины.
+                // Если ж Catch зовёт нас в бездну рекурсии,
+                // И стек уже готов добавить ещё один фрейм,
+                // Пошли нам благословение – StackOverflow обойди стороной,
+                // А если нет – лишь тихо прошепчи:
+                EmergencyResponse("пизда рулю...", e2);
             }
         }
 
@@ -179,12 +207,8 @@ namespace UnixLauncher.Core.Logger
             {
                 if (disposing)
                 {
-                    _fileStream?.Flush();
-                    _fileStream?.Dispose();
-
                     _writeLock.Dispose();
                 }
-
 
                 _disposed = true;
             }
@@ -194,17 +218,6 @@ namespace UnixLauncher.Core.Logger
         {
             if (!_disposed)
             {
-                // Гарантируем, что все записи завершены
-                await _writeLock.WaitAsync();
-                try
-                {
-                    await _fileStream.FlushAsync();
-                }
-                finally
-                {
-                    _writeLock.Release();
-                }
-                await _fileStream.DisposeAsync();
                 _writeLock.Dispose();
                 _disposed = true;
                 GC.SuppressFinalize(this);

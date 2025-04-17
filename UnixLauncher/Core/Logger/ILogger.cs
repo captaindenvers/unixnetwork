@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace UnixLauncher.Core.Logger
+﻿namespace UnixLauncher.Core.Logger
 {
     /// <summary>
     /// Определяет контракт для логгера, позволяющий записывать сообщения различных уровней важности и управлять областью логирования.

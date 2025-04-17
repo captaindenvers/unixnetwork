@@ -6,15 +6,18 @@ namespace UnixLauncher.Core.Providers
     {
         private static readonly string _companyName = "UnixNetwork";
 
+        // "Ленивое" вычисление пути (1 раз и тогда, когда потребуется)
+        private static readonly Lazy<string> _path = new(() => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            _companyName));
+
         /// <summary>
-        /// Вычисляет путь до папки "UnixNetwork" в AppData
+        /// Вычисляет путь до папки приложения в AppData
         /// </summary>
         /// <returns>Возвращает строку абсолютного пути</returns>
-        public static string GetFolder() 
+        public static string GetFolder()
         {
-            return Path.Combine(
-                                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                                _companyName);
+            return _path.Value;
         }
     }
 }

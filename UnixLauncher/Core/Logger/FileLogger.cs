@@ -2,7 +2,6 @@
 using System.Text;
 using UnixLauncher.Core.Misc;
 using UnixLauncher.Core.Providers;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace UnixLauncher.Core.Logger
 {

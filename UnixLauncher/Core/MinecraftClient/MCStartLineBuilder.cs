@@ -1,8 +1,4 @@
-﻿using Microsoft.Extensions.Logging.Configuration;
-using System;
-using System.Runtime.CompilerServices;
-using System.Text;
-using UnixLauncher.Core.Logger;
+﻿using UnixLauncher.Core.Logger;
 using UnixLauncher.Core.Misc;
 
 namespace UnixLauncher.Core.MinecraftClient

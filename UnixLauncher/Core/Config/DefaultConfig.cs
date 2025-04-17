@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.IO;
 using UnixLauncher.Core.Logger;
 using UnixLauncher.Core.Providers;
 
@@ -270,6 +265,7 @@ namespace UnixLauncher.Core.Config
         /// Если ключ уже существует – его значение заменяется, иначе создается новая запись.
         /// <throws>Выбрасывает <see cref="ArgumentException"/>, если передан пустой ключ</throws>
         /// </summary>
+        /// <exception cref="ArgumentException"/>
         public async Task CreateOrSetProperty<T>(string key, T value)
         {
             if (string.IsNullOrWhiteSpace(key))
@@ -390,6 +386,7 @@ namespace UnixLauncher.Core.Config
         /// Получает значение свойства конфигурации из кэша без обращения к файлу. 
         /// <throws>Выбрасывает <see cref="ArgumentException"/>, если передан пустой ключ. </throws>
         /// </summary>
+        /// <exception cref="ArgumentException"/>
         /// <returns>Значение из кэша или пустая строка</returns>
         private string GetPropertyFromCache(string key)
         {
@@ -414,6 +411,7 @@ namespace UnixLauncher.Core.Config
         /// Сначала проверяет значение в кэше, затем в файле.
         /// Выбрасывает <see cref="ArgumentException"/>, если переданный ключ оказался пустым
         /// </summary>
+        /// <exception cref="ArgumentException"/>
         /// <param name="key">Искомый ключ</param>
         /// <returns>Если ключ найден – возвращает значение, иначе пустую строку</returns>
         public async Task<string> GetPropertyAsync(string key)
@@ -531,7 +529,6 @@ namespace UnixLauncher.Core.Config
                         // Используем таймаут для предотвращения бесконечного ожидания
                         var task = Task.Run(() => GetPropertyAsync(key));
 
-                        // Ждем результат не более 5 секунд
                         if (task.Wait(_semaphoreTimeout))
                         {
                             cachedValue = task.Result;

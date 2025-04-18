@@ -23,7 +23,7 @@ namespace UnixLauncher.Core.Config
         // Объект для блокировки доступа к файлу конфигурации
         private readonly SemaphoreSlim _configFileLock = new SemaphoreSlim(1, 1);
 
-        // Таймаут для операций с семафором (5 секунд)
+        // Таймаут для операций с семафором (10 секунд)
         private readonly TimeSpan _semaphoreTimeout = TimeSpan.FromSeconds(10);
 
         // Объект для блокировки доступа к кэшу конфигурации
@@ -39,82 +39,8 @@ namespace UnixLauncher.Core.Config
             new("Theme", "System",    "Avaible values: Dark, White, System."),
         ];
 
-        /// <summary>
-        /// Создает объект с предустановленными, стандартными данными.
-        /// <para/>
-        /// ( <see cref="FileName"/> = launcher.cfg,
-        /// <see cref="PathToFile"/> = <see cref="AppDataProvider.GetFolder"/> )
-        /// </summary>
-        public DefaultConfig(ILogger logger)
-        {
-            _logger = logger;
-            // Проверка правильности пути
-            EnsureValidPath();
-            // Загружаем конфигурацию синхронно при создании экземпляра
-            Task.Run(() => InitializeConfigAsync()).Wait();
-        }
-
-        /// <param name="shouldAddDefaultConfigValues"> 
-        ///     Необязательно. Если <b>true</b>, то значения из
-        ///     <paramref name="defaultConfigValues"/> ДОБАВЯТСЯ, а не перезапишутся к стандартным.
-        /// </param>
-        public DefaultConfig(ILogger logger,
-                             string fileName,
-                             string pathToFile,
-                             List<(string key, string value, string? comment)> defaultConfigValues,
-                             bool shouldAddDefaultConfigValues = false)
-        {
-            _logger = logger;
-            FileName = fileName;
-            PathToFile = pathToFile;
-
-            // Проверка правильности пути
-            EnsureValidPath();
-
-            if (shouldAddDefaultConfigValues)
-            {
-                _defaultConfigValues.AddRange(defaultConfigValues);
-            }
-            else
-            {
-                _defaultConfigValues.Clear();
-                _defaultConfigValues.AddRange(defaultConfigValues);
-            }
-
-            // Загружаем конфигурацию синхронно при создании экземпляра
-            Task.Run(() => InitializeConfigAsync()).Wait();
-        }
-
-        /// <summary>
-        /// Инициализирует конфигурацию при создании экземпляра класса
-        /// </summary>
-        private async Task InitializeConfigAsync()
-        {
-            try
-            {
-                if (!File.Exists(FullFileName))
-                {
-                    await CreateConfig();
-                }
-                else
-                {
-                    await LoadConfigToCacheAsync();
-                }
-            }
-            catch (Exception ex)
-            {
-                await _logger.ErrorAsync("Error initializing config", ex);
-            }
-        }
-
-        // Проверяет и корректирует путь к файлу
-        private void EnsureValidPath()
-        {
-            if (!string.IsNullOrEmpty(PathToFile) && !PathToFile.EndsWith(Path.DirectorySeparatorChar))
-            {
-                PathToFile += Path.DirectorySeparatorChar;
-            }
-        }
+        // Ленивая однократная инициализация
+        private readonly Lazy<Task> _initializationTask;
 
         // Стартовый комментарий, записываемый в начале файла конфигурации
         private const string START_COMMENT =
@@ -144,73 +70,74 @@ namespace UnixLauncher.Core.Config
 
             """;
 
-        public string GetFileName() => FileName;
-
-        public string GetPathToFile() => PathToFile;
 
         /// <summary>
-        /// Создаёт файл конфигурации, если он отсутствует или требуется его перезапись.
+        /// Создает объект с предустановленными, стандартными данными.
+        /// <para/>
+        /// ( <see cref="FileName"/> = launcher.cfg,
+        /// <see cref="PathToFile"/> = <see cref="AppDataProvider.GetFolder"/> )
         /// </summary>
-        /// <param name="forceRewriting">Если true, перезаписывает файл даже если он существует.</param>
-        private async Task CreateConfig(bool forceRewriting = false)
+        public DefaultConfig(ILogger logger)
         {
-            // Используем тайм-аут для предотвращения бесконечного ожидания
-            bool lockTaken = await _configFileLock.WaitAsync(_semaphoreTimeout);
-            if (!lockTaken)
-            {
-                await _logger.ErrorAsync("Failed to acquire lock for creating config file - timeout.");
-                throw new TimeoutException("Failed to acquire lock for creating config file.");
-            }
+            _logger = logger;
 
+            // Настраиваем ленивую инициализацию
+            _initializationTask = new Lazy<Task>(InitializeConfigAsync, LazyThreadSafetyMode.ExecutionAndPublication);
+        }
+
+        /// <param name="shouldAddDefaultConfigValues"> 
+        ///     Необязательно. Если <b>true</b>, то значения из
+        ///     <paramref name="defaultConfigValues"/> ДОБАВЯТСЯ, а не перезапишутся к стандартным.
+        /// </param>
+        public DefaultConfig(ILogger logger,
+                             string fileName,
+                             string pathToFile,
+                             List<(string key, string value, string? comment)> defaultConfigValues,
+                             bool shouldAddDefaultConfigValues = false)
+        {
+            _logger = logger;
+            FileName = fileName;
+            PathToFile = pathToFile;
+
+            if (!shouldAddDefaultConfigValues)
+                _defaultConfigValues.Clear();
+
+            _defaultConfigValues.AddRange(defaultConfigValues);
+
+
+            // Ленивая инициализация
+            _initializationTask = new Lazy<Task>(InitializeConfigAsync, LazyThreadSafetyMode.ExecutionAndPublication);
+        }
+        /// <summary>
+        /// Гарантирует выполнение инициализации один раз
+        /// </summary>
+        private Task EnsureInitializedAsync() => _initializationTask.Value;
+
+        /// <summary>
+        /// Инициализирует конфигурацию при создании экземпляра класса
+        /// </summary>
+        private async Task InitializeConfigAsync()
+        {
             try
             {
-                // Создаем директорию, если её нет
-                if (!Directory.Exists(PathToFile))
+                if (!File.Exists(FullFileName))
                 {
-                    Directory.CreateDirectory(PathToFile);
-                }
-
-                // Если файла нет или требуется перезапись, создаем новый файл и записываем дефолтные значения
-                if (!File.Exists(FullFileName) || forceRewriting)
-                {
-                    using StreamWriter streamWriter = new StreamWriter(FullFileName, false);
-                    await streamWriter.WriteAsync(START_COMMENT);
-
-                    foreach (var cfgField in _defaultConfigValues)
-                    {
-                        string commentLine = string.IsNullOrEmpty(cfgField.comment) ? "" : $"#{cfgField.comment}\n";
-                        await streamWriter.WriteAsync($"{commentLine}{cfgField.key}={cfgField.value}\n\n");
-
-                        // Кэшируем дефолтные значения
-                        _cacheLock.EnterWriteLock();
-                        try
-                        {
-                            _configCache[cfgField.key] = cfgField.value;
-                        }
-                        finally
-                        {
-                            _cacheLock.ExitWriteLock();
-                        }
-                    }
-
-                    await _logger.DebugAsync("Created default config at " + FullFileName);
+                    await CreateConfig();
                 }
                 else
                 {
-                    // Если файл существует и мы не перезаписываем его, загружаем значения в кэш
                     await LoadConfigToCacheAsync();
                 }
             }
             catch (Exception ex)
             {
-                await _logger.ErrorAsync("Error creating config file", ex);
-                throw; // Пробрасываем исключение для обработки на более высоком уровне
-            }
-            finally
-            {
-                _configFileLock.Release();
+                await _logger.ErrorAsync("Error initializing config", ex);
             }
         }
+
+        public string GetFileName() => FileName;
+
+        public string GetPathToFile() => PathToFile;
 
         /// <summary>
         /// Загружает все конфигурационные значения из файла в кэш
@@ -249,8 +176,10 @@ namespace UnixLauncher.Core.Config
                     string currentKey = trimmedLine.Substring(0, equalsIndex).Trim();
                     string currentValue = trimmedLine.Substring(equalsIndex + 1).Trim();
 
-                    if (!string.IsNullOrWhiteSpace(currentValue) && !_configCache.ContainsKey(currentKey))
+                    if (!_configCache.ContainsKey(currentKey))
+                    {
                         _configCache[currentKey] = currentValue;
+                    }
                 }
             }
             finally
@@ -268,8 +197,9 @@ namespace UnixLauncher.Core.Config
         /// <exception cref="ArgumentException"/>
         public async Task CreateOrSetProperty<T>(string key, T value)
         {
-            if (string.IsNullOrWhiteSpace(key))
-                throw new ArgumentException("Key cannot be null or empty", nameof(key));
+            await EnsureInitializedAsync();
+            // Если не прошли проверку - выкидывается исключение
+            await CheckKey(key);
 
             // Преобразуем значение в строку
             string stringValue = value?.ToString() ?? string.Empty;
@@ -413,11 +343,17 @@ namespace UnixLauncher.Core.Config
         /// </summary>
         /// <exception cref="ArgumentException"/>
         /// <param name="key">Искомый ключ</param>
+        /// <param name="skipKeyCheking"><b>Лучше оставить на false, если ключ не был проверен извне!</b>
+        /// Опциональный флаг, стоит ли пропускать изначальную проверку ключа.
+        /// При выключенной проверке не гарантируется стабильное логгирование проблемных мест.</param>
         /// <returns>Если ключ найден – возвращает значение, иначе пустую строку</returns>
-        public async Task<string> GetPropertyAsync(string key)
+        public async Task<string> GetPropertyAsync(string key, bool skipKeyCheking = false)
         {
-            if (string.IsNullOrWhiteSpace(key))
-                throw new ArgumentException("Key can't be empty!", nameof(key));
+            await EnsureInitializedAsync();
+            // Пропуск проверки, например, если она уже была сделана в методе аналоге
+            // TryGetPropertyAsync.
+            if (!skipKeyCheking)
+                await CheckKey(key);
 
             // Сначала проверяем значение в кэше
             string cachedValue = GetPropertyFromCache(key);
@@ -512,55 +448,59 @@ namespace UnixLauncher.Core.Config
         /// <param name="key">Ключ свойства</param>
         /// <param name="value">Результирующее значение (если преобразование прошло успешно)</param>
         /// <returns>true, если значение получено и успешно преобразовано, иначе false</returns>
-        public bool TryGetProperty<T>(string key, out T? value)
+        public async Task<(bool success, T? value)> TryGetPropertyAsync<T>(string key)
         {
-            value = default;
+            await EnsureInitializedAsync();
+            T? value = default;
+            try
+            {
+                await CheckKey(key);
+            }
+            catch (ArgumentException)
+            {
+                // CheckKey уже логирует ошибку перед выбрасыванием
+                return (false, value);
+            }
+            catch (Exception ex)
+            {
+                // Это что-то неожиданное из CheckKey (например, ошибка логгера внутри него).
+                await _logger.ErrorAsync($"Unexpected error during CheckKey for key '{key}'", ex);
+                throw; 
+            }
 
             try
             {
-                // Сначала проверяем значение в кэше (синхронно)
-                string cachedValue = GetPropertyFromCache(key);
+                // Сначала проверяем значение в кэше
+                // Не должно выбрасывать ошибок, ибо мы уже проверили ключ выше.
+                string stringValue = GetPropertyFromCache(key);
 
                 // Если значение не найдено в кэше, получаем его из файла
-                if (string.IsNullOrEmpty(cachedValue))
+                if (string.IsNullOrEmpty(stringValue))
                 {
                     try
                     {
-                        // Используем таймаут для предотвращения бесконечного ожидания
-                        var task = Task.Run(() => GetPropertyAsync(key));
-
-                        if (task.Wait(_semaphoreTimeout))
-                        {
-                            cachedValue = task.Result;
-                        }
-                        else
-                        {
-                            return false; // Таймаут при получении значения
-                        }
+                        stringValue = await GetPropertyAsync(key);
                     }
                     catch (Exception ex)
                     {
-                        Task.Run(() => _logger.ErrorAsync("Error getting property async", ex)).Wait(_semaphoreTimeout);
-                        return false;
+                        await _logger.ErrorAsync("Error getting property async", ex);
+                        return (false, value);
                     }
                 }
 
-                if (string.IsNullOrEmpty(cachedValue))
-                    return false;
-
                 if (typeof(T) == typeof(string))
                 {
-                    value = (T)(object)cachedValue;
-                    return true;
+                    value = (T)(object)stringValue;
+                    return (true, value);
                 }
 
-                value = (T)Convert.ChangeType(cachedValue, typeof(T));
-                return true;
+                value = (T)Convert.ChangeType(stringValue, typeof(T));
+                return (true, value);
             }
             catch (Exception e)
             {
-                Task.Run(() => _logger.ErrorAsync("TYPE CONVERSION ERROR", e)).Wait(_semaphoreTimeout);
-                return false;
+                await _logger.ErrorAsync("TYPE CONVERSION ERROR", e);
+                return (false, value);
             }
         }
 
@@ -571,6 +511,93 @@ namespace UnixLauncher.Core.Config
         {
             _configFileLock.Dispose();
             _cacheLock.Dispose();
+        }
+
+        /// <summary>
+        /// Проверяет валидностью ключа поля в конфиге.
+        /// Если ключ пустой или же содержит запрещенный символ ('='), то это логируется и 
+        /// выбрасывается соответстующее исключение.
+        /// </summary>
+        /// <exception cref="ArgumentException"></exception>
+        private async Task CheckKey(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                ArgumentException exception = new("Key cannot be null or empty.", nameof(key));
+                await _logger.ErrorAsync(exception);
+                throw exception;
+            }
+
+            if (key.Contains('='))
+            {
+                ArgumentException exception = new("Key cannot contain '=' symbol.", nameof(key));
+                await _logger.ErrorAsync(exception);
+                throw exception;
+            }
+        }
+
+        /// <summary>
+        /// Создаёт файл конфигурации, если он отсутствует или требуется его перезапись.
+        /// </summary>
+        /// <param name="forceRewriting">Если true, перезаписывает файл даже если он существует.</param>
+        private async Task CreateConfig(bool forceRewriting = false)
+        {
+            // Используем тайм-аут для предотвращения бесконечного ожидания
+            bool lockTaken = await _configFileLock.WaitAsync(_semaphoreTimeout);
+            if (!lockTaken)
+            {
+                await _logger.ErrorAsync("Failed to acquire lock for creating config file - timeout.");
+                throw new TimeoutException("Failed to acquire lock for creating config file.");
+            }
+
+            try
+            {
+                // Создаем директорию, если её нет
+                if (!Directory.Exists(PathToFile))
+                {
+                    Directory.CreateDirectory(PathToFile);
+                }
+
+                // Если файла нет или требуется перезапись, создаем новый файл и записываем дефолтные значения
+                if (!File.Exists(FullFileName) || forceRewriting)
+                {
+                    using StreamWriter streamWriter = new StreamWriter(FullFileName, false);
+                    await streamWriter.WriteAsync(START_COMMENT);
+
+                    foreach (var cfgField in _defaultConfigValues)
+                    {
+                        string commentLine = string.IsNullOrEmpty(cfgField.comment) ? "" : $"#{cfgField.comment}\n";
+                        await streamWriter.WriteAsync($"{commentLine}{cfgField.key}={cfgField.value}\n\n");
+
+                        // Кэшируем дефолтные значения
+                        _cacheLock.EnterWriteLock();
+                        try
+                        {
+                            _configCache[cfgField.key] = cfgField.value;
+                        }
+                        finally
+                        {
+                            _cacheLock.ExitWriteLock();
+                        }
+                    }
+
+                    await _logger.DebugAsync("Created default config at " + FullFileName);
+                }
+                else
+                {
+                    // Если файл существует и мы не перезаписываем его, загружаем значения в кэш
+                    await LoadConfigToCacheAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                await _logger.ErrorAsync("Error creating config file", ex);
+                throw; // Пробрасываем исключение для обработки на более высоком уровне
+            }
+            finally
+            {
+                _configFileLock.Release();
+            }
         }
     }
 }

@@ -32,7 +32,7 @@
         /// Returns null if the key does not exist.
         /// </summary>
         /// <returns>The corresponding value, or null if not found.</returns>
-        Task<string> GetPropertyAsync(string key);
+        Task<string> GetPropertyAsync(string key, bool skipKeyCheking = false);
 
         /// <summary>
         /// Attempts to retrieve a configuration value with type safety.
@@ -40,7 +40,7 @@
         /// <typeparam name="T">The expected type of the value.</typeparam>
         /// <param name="value">The output parameter containing the retrieved value if found.</param>
         /// <returns>True if the value exists and is of the correct type; otherwise, false.</returns>
-        bool TryGetProperty<T>(string key, out T? value);
+        Task<(bool success, T? value)> TryGetPropertyAsync<T>(string key);
 
         /// <summary>
         /// Raised when the configuration settings change.

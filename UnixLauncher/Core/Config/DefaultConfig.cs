@@ -479,7 +479,7 @@ namespace UnixLauncher.Core.Config
                 {
                     try
                     {
-                        stringValue = await GetPropertyAsync(key);
+                        stringValue = await GetPropertyAsync(key, true);
                     }
                     catch (Exception ex)
                     {
